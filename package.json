@@ -1,0 +1,11 @@
+{
+  "name": "lcse-widget-soutien",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Widget Grist \"Soutenez les clubs sportifs engagés\" (France Travail).",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.js",
+    "dev": "python3 -m http.server 8080"
+  }
+}

@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soutenez les clubs sportifs engagés</title>
+
+<!-- Design System France Travail (officiel) -->
+<link rel="stylesheet" href="https://cdn.francetravail.fr/studio/design-system/css/styles.css">
+<script src="https://cdn.francetravail.fr/webco/v1/ft-autoloader.js" fetchpriority="high"></script>
+
+<!-- API widget Grist (instance auto-hébergée) -->
+<script src="https://grist.aucarre.tech/grist-plugin-api.js"></script>
+
+<style>
+/* Mise en page du widget "Soutenez les clubs sportifs engagés".
+   Les couleurs, la typographie (Marianne), les rayons et les composants
+   (.btn, .form-control, .modal, .alert, .badge, .progress) viennent du
+   Design System France Travail (styles.css, chargé dans index.html) —
+   ce fichier ne fait que composer la mise en page propre au widget avec
+   les tokens --ft--*. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--ft--color-background-neutral-default-weakest, #f5f5f8);
+  color: var(--ft--color-text-color, #2e2e31);
+}
+
+body {
+  font-family: Marianne, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.lcse-header {
+  background: #fff;
+  border-bottom: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.lcse-header-logo {
+  height: 40px;
+  width: auto;
+}
+
+.lcse-header-logo-lcse {
+  height: 64px;
+}
+
+.lcse-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3.5rem;
+}
+
+.lcse-loading,
+.lcse-error {
+  padding: 2rem 0;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+}
+
+.lcse-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.lcse-title-bar {
+  width: 4px;
+  align-self: stretch;
+  flex: 0 0 4px;
+  background: var(--ft--color-primary, #283276);
+  border-radius: 2px;
+}
+
+.lcse-title {
+  margin: 0;
+  font-family: Marianne, system-ui, sans-serif;
+  font-size: var(--ft--font-size-display-4, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Filtres */
+
+.lcse-filters {
+  background: #fff;
+  border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
+  border-radius: var(--ft--button-border-radius, 0.75rem);
+  margin-bottom: 1.5rem;
+  /* Pas d'overflow:hidden ici : il découperait les listes déroulantes des
+     combobox de filtre, qui dépassent sous le cadre. Les coins de l'entête
+     sont arrondis directement ci-dessous à la place. */
+}
+
+.lcse-filters-head {
+  background: var(--ft--color-primary-05, #eaecfb);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: var(--ft--button-border-radius, 0.75rem) var(--ft--button-border-radius, 0.75rem) 0 0;
+}
+
+.lcse-filters-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ft--color-primary, #283276);
+}
+
+.lcse-reset-btn {
+  border: 0;
+  background: none;
+  color: var(--ft--color-primary, #283276);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.lcse-reset-btn:hover { color: var(--ft--color-primary-hover, #1b2256); }
+
+.lcse-filters-grid {
+  padding: 1.125rem 1.25rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .lcse-filters-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .lcse-filters-grid { grid-template-columns: 1fr; }
+}
+
+.lcse-count {
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+}
+
+/* Grille de cartes */
+
+.lcse-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 1080px) {
+  .lcse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .lcse-grid { grid-template-columns: 1fr; }
+}
+
+.lcse-card {
+  background: #fff;
+  border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
+  border-radius: var(--ft--button-border-radius, 0.75rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lcse-card-body {
+  padding: 1.25rem 1.25rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lcse-card-top {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.lcse-card-date {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ft--color-primary, #283276);
+}
+
+.lcse-card-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+
+.lcse-card-photo {
+  flex: 0 0 88px;
+  width: 88px;
+  height: 66px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+  overflow: hidden;
+}
+
+/* Cadre + fond uniquement tant qu'il n'y a pas de logo à afficher */
+.lcse-card-photo:not(:has(img)) {
+  border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
+  background: var(--ft--color-background-neutral-default-weakest, #f5f5f8);
+}
+
+.lcse-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* logo de club : on veut le voir en entier, pas le rogner comme une photo */
+  padding: 0.25rem;
+}
+
+.lcse-card-club {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ft--color-primary, #283276);
+}
+
+.lcse-card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
+}
+
+.lcse-card-meta dt {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+  margin-bottom: 0.125rem;
+}
+
+.lcse-card-meta dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.lcse-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: auto;
+  margin-bottom: 1.25rem;
+}
+
+.lcse-card-progress { flex: 1; min-width: 0; }
+
+.lcse-card-progress .progress-label {
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.lcse-card-progress .progress { width: 100%; height: 0.5rem; }
+.lcse-card-progress .progress-bar { background-color: var(--ft--color-primary, #283276); height: 100%; }
+
+/* Modale de soutien */
+
+.modal-backdrop.show,
+.lcse-modal.show {
+  display: block;
+}
+
+.lcse-modal-header {
+  background: var(--ft--color-primary-05, #eaecfb);
+  padding: 1.25rem 1.5rem;
+}
+
+.lcse-modal-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ft--color-primary, #283276);
+}
+
+.lcse-modal-meta {
+  margin: 0.125rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+}
+
+.lcse-form-body {
+  padding-top: 1.5rem !important;
+}
+
+.lcse-sent-body {
+  padding-top: 1.75rem !important;
+}
+
+.lcse-modal-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+}
+
+/* Filtres avec recherche (combobox) */
+
+.lcse-combo-wrap {
+  position: relative;
+}
+
+.lcse-combo-wrap input {
+  padding-right: 2rem;
+}
+
+.lcse-combo-wrap::after {
+  content: "";
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--ft--color-background-neutral-default-strong, #5b5d65);
+  border-bottom: 2px solid var(--ft--color-background-neutral-default-strong, #5b5d65);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.lcse-combo-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgba(15, 20, 56, 0.14);
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.lcse-combo-option {
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.lcse-combo-option:hover,
+.lcse-combo-option:active {
+  background: var(--ft--color-primary-05, #eaecfb);
+}
+
+.lcse-combo-option.is-selected {
+  font-weight: 700;
+  color: var(--ft--color-primary, #283276);
+}
+
+.lcse-combo-empty {
+  padding: 0.5rem 0.625rem;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+}
+
+/* Utilitaires */
+
+.lcse-hidden { display: none !important; }
+
+</style>
+</head>
+<body>
+
+<header class="lcse-header">
+  <img src="https://cdn.francetravail.fr/studio/logos/marque/Logo_France_Travail_RVB_Horizontal_Coul_Positif.svg" alt="France Travail" class="lcse-header-logo">
+  <img src="https://lesclubs-sportifs-engages.francetravail.fr/img/logo-lcse.svg" alt="Les clubs sportifs engagés" class="lcse-header-logo lcse-header-logo-lcse">
+</header>
+
+<main id="app" class="lcse-main">
+  <div class="lcse-loading" id="state-loading">
+    <p>Chargement des actions…</p>
+  </div>
+</main>
+
+<script>
+/* ---- src/logic.js ---- */
+/*
+ * Logique pure du widget "Soutenez les clubs sportifs engagés" : formatage,
+ * jointure des tables Grist, calcul des filtres. Aucune de ces fonctions ne
+ * touche au DOM ni à `grist` — elles prennent des données en entrée et
+ * renvoient des données en sortie, ce qui les rend testables sous Node
+ * (voir test/logic.test.js) sans navigateur ni widget Grist réel.
+ *
+ * Chargé à la fois :
+ *  - dans le navigateur, comme <script src="./src/logic.js"></script>
+ *    classique (pas de module) : les fonctions sont exposées sur
+ *    `window.LCSE`.
+ *  - sous Node, via require("./logic.js") pour les tests : `module` existe
+ *    alors et on exporte le même objet.
+ */
+(function (root) {
+  "use strict";
+
+  const ALL = "Toutes";
+
+  const TABLES = {
+    actions: "Actions",
+    dr: "DR",
+    dd: "DD",
+    agences: "Agences",
+    structures: "Structures",
+    federations: "Federations",
+    cofinancements: "Cofinancements",
+    soutiens: "Soutiens",
+  };
+
+  const FILTER_KEYS = ["region", "dept", "fede", "club"];
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  // toLocaleString("fr-FR") sépare les milliers par une espace fine
+  // insécable (U+202F), pas une espace normale : on la remplace par une
+  // espace normale pour un rendu/copier-coller plus prévisible.
+  function eur(n) {
+    const num = Number(n) || 0;
+    return num.toLocaleString("fr-FR").replace(/ /g, " ") + " €";
+  }
+
+  // Fuseau fixé à Europe/Paris : ces dates sont celles d'actions en France
+  // et doivent s'afficher pareil pour tout le monde, quel que soit le
+  // fuseau du navigateur du visiteur (ou de la machine qui exécute les
+  // tests).
+  function formatDateFr(ts) {
+    if (ts === null || ts === undefined || ts === false) return "Date à préciser";
+    const d = new Date(ts * 1000);
+    return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" }).format(d);
+  }
+
+  // Grist encode les ChoiceList/RefList/Attachments en ["L", v1, v2, ...].
+  function unpackList(value) {
+    if (Array.isArray(value)) {
+      return value[0] === "L" ? value.slice(1) : value;
+    }
+    return [];
+  }
+
+  function uniqSorted(values) {
+    return Array.from(new Set(values.filter((v) => v))).sort((a, b) => a.localeCompare(b, "fr"));
+  }
+
+  function filterOptionsByQuery(options, query) {
+    const q = String(query || "").trim().toLocaleLowerCase("fr-FR");
+    if (!q) return options;
+    return options.filter((o) => o.toLocaleLowerCase("fr-FR").includes(q));
+  }
+
+  // grist.docApi.fetchTable renvoie un objet en colonnes ({id:[...], Col:[...]}).
+  // On le transforme en tableau de lignes {id, Col, ...}.
+  function rowsFromColumnTable(table) {
+    const ids = (table && table.id) || [];
+    return ids.map((id, i) => {
+      const row = { id };
+      for (const col of Object.keys(table)) {
+        if (col === "id") continue;
+        row[col] = table[col][i];
+      }
+      return row;
+    });
+  }
+
+  function indexById(rows) {
+    const map = new Map();
+    for (const r of rows) map.set(r.id, r);
+    return map;
+  }
+
+  function photoUrlFor(structure, attachToken) {
+    if (!structure || !attachToken) return null;
+    const ids = unpackList(structure.Logo);
+    if (!ids.length) return null;
+    return `${attachToken.baseUrl}/attachments/${ids[0]}/download?auth=${attachToken.token}`;
+  }
+
+  // Statuts qui retirent une action du widget, quel que soit son financement.
+  const HIDDEN_STATUTS = new Set(["Réalisée", "Annulée"]);
+
+  // La date affichée dépend du statut : une date exacte n'a de sens que
+  // pour une action "Planifiée" ; tant que c'est "A confirmer" (ou tout
+  // autre statut), on affiche la période approximative en texte libre.
+  function dateLabelFor(a) {
+    if (a.Statut === "Planifiée") return formatDateFr(a.Date);
+    const approx = a.Periode_approx && String(a.Periode_approx).trim();
+    return approx || "Date à préciser";
+  }
+
+  /**
+   * Assemble les tables brutes (au format colonnes de grist.docApi.fetchTable)
+   * en une liste d'actions prêtes à l'affichage : résolution des références
+   * (Club, Agence, Fédération, DR, DD), calcul de la jauge de financement à
+   * partir de Cofinancements, et labels formatés en français.
+   *
+   * Règles métier qui retirent une action du résultat :
+   *  - déjà financée à 100 % (collecte >= budget) ;
+   *  - statut "Réalisée" ou "Annulée".
+   *
+   * @param {object} tables { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT }
+   *   — chacune au format renvoyé par grist.docApi.fetchTable.
+   * @param {{baseUrl:string, token:string}|null} attachToken pour construire
+   *   les URLs de téléchargement des logos (Structures.Logo), ou null si
+   *   indisponible (les logos retombent alors sur le placeholder).
+   */
+  function buildActions(tables, attachToken) {
+    const { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT } = tables;
+
+    const drMap = indexById(rowsFromColumnTable(drT));
+    const ddMap = indexById(rowsFromColumnTable(ddT));
+    const agenceMap = indexById(rowsFromColumnTable(agencesT));
+    const structureMap = indexById(rowsFromColumnTable(structuresT));
+    const federationMap = indexById(rowsFromColumnTable(federationsT));
+    const cofinRows = rowsFromColumnTable(cofinT);
+
+    const collecteByAction = new Map();
+    for (const c of cofinRows) {
+      if (!c.Action) continue;
+      collecteByAction.set(c.Action, (collecteByAction.get(c.Action) || 0) + (Number(c.Montant) || 0));
+    }
+
+    const rawActions = rowsFromColumnTable(actionsT);
+
+    return rawActions
+      .map((a) => {
+        const dr = a.DR ? drMap.get(a.DR) : null;
+        const dd = a.DD ? ddMap.get(a.DD) : null;
+        const agence = a.Agence ? agenceMap.get(a.Agence) : null;
+        const structure = a.Club ? structureMap.get(a.Club) : null;
+        const federation = a.Federation ? federationMap.get(a.Federation) : null;
+        const budget = Number(a.Budget) || 0;
+        const collecte = collecteByAction.get(a.id) || 0;
+        const pct = budget > 0 ? Math.min(100, Math.round((collecte / budget) * 100)) : (collecte > 0 ? 100 : 0);
+        const publicLabels = unpackList(a.Public);
+
+        return {
+          id: a.id,
+          intitule: a.Intitule || "(sans titre)",
+          statut: a.Statut || "",
+          dateLabel: dateLabelFor(a),
+          clubLabel: structure ? structure.Nom : "Club non renseigné",
+          villeLabel: agence ? agence.Libelle_agence : "Non précisée",
+          federationLabel: federation ? federation.Nom : "Non précisée",
+          regionLabel: dr ? dr.Nom : "",
+          deptLabel: dd ? dd.Nom : "",
+          participantsLabel: (a.Jauge || a.Jauge === 0) ? (Number(a.Jauge).toLocaleString("fr-FR") + " participants") : "Non précisé",
+          publicLabel: publicLabels.length ? publicLabels.join(", ") : "Non précisé",
+          photoUrl: photoUrlFor(structure, attachToken),
+          budget,
+          collecte,
+          pct,
+          collecteLabel: eur(collecte) + " cofinancés sur " + eur(budget),
+        };
+      })
+      // Une action déjà financée à 100 %, ou marquée Réalisée/Annulée,
+      // n'est plus ouverte au soutien.
+      .filter((a) => a.pct < 100 && !HIDDEN_STATUTS.has(a.statut));
+  }
+
+  // Options disponibles pour chaque filtre. Le département est limité à la
+  // région choisie ; fédération et club restent globaux (comportement du
+  // prototype d'origine, conservé tel quel).
+  function getFilterOptions(actions, state) {
+    const inRegion = state.region === ALL ? actions : actions.filter((a) => a.regionLabel === state.region);
+    return {
+      region: [ALL, ...uniqSorted(actions.map((a) => a.regionLabel))],
+      dept: [ALL, ...uniqSorted(inRegion.map((a) => a.deptLabel))],
+      fede: [ALL, ...uniqSorted(actions.map((a) => a.federationLabel))],
+      club: [ALL, ...uniqSorted(actions.map((a) => a.clubLabel))],
+    };
+  }
+
+  const api = {
+    ALL,
+    TABLES,
+    FILTER_KEYS,
+    escapeHtml,
+    eur,
+    formatDateFr,
+    unpackList,
+    uniqSorted,
+    filterOptionsByQuery,
+    rowsFromColumnTable,
+    indexById,
+    photoUrlFor,
+    buildActions,
+    getFilterOptions,
+  };
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = api;
+  } else {
+    root.LCSE = Object.assign(root.LCSE || {}, api);
+  }
+})(typeof window !== "undefined" ? window : globalThis);
+
+
+/* ---- src/render.js ---- */
+/*
+ * Fabriques de HTML (chaînes de caractères) pour le widget. Fonctions
+ * pures : elles reçoivent en paramètre tout ce dont elles ont besoin
+ * (données + état d'affichage) et ne lisent aucune variable globale — donc
+ * testables sous Node (test/render.test.js) en comparant simplement les
+ * chaînes produites.
+ *
+ * Même mécanique de chargement isomorphe que logic.js : global
+ * `window.LCSE` dans le navigateur, `module.exports` sous Node.
+ */
+(function (root, factory) {
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = factory(require("./logic.js"));
+  } else {
+    root.LCSE = Object.assign(root.LCSE || {}, factory(root.LCSE));
+  }
+})(typeof window !== "undefined" ? window : globalThis, function (logic) {
+  "use strict";
+
+  const { escapeHtml, filterOptionsByQuery } = logic;
+
+  function renderEmptyState() {
+    return `
+    <div class="alert alert-info" role="status">
+      <div class="alert-body">
+        <p class="alert-title">Aucune action sur ce périmètre</p>
+        <p class="alert-content">Élargissez la sélection pour voir les actions des territoires voisins.</p>
+      </div>
+    </div>`;
+  }
+
+  function renderCard(a) {
+    return `
+    <article class="lcse-card">
+      <div class="lcse-card-body">
+        <div class="lcse-card-top">
+          <div>
+            <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
+            <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
+          </div>
+          <div class="lcse-card-photo">${a.photoUrl ? `<img src="${escapeHtml(a.photoUrl)}" alt="">` : "Photo"}</div>
+        </div>
+
+        <p class="lcse-card-club">${escapeHtml(a.clubLabel)}</p>
+
+        <dl class="lcse-card-meta">
+          <div>
+            <dt>Ville</dt>
+            <dd>${escapeHtml(a.villeLabel)}</dd>
+          </div>
+          <div>
+            <dt>Fédération</dt>
+            <dd>${escapeHtml(a.federationLabel)}</dd>
+          </div>
+          <div>
+            <dt>Participants</dt>
+            <dd>${escapeHtml(a.participantsLabel)}</dd>
+          </div>
+          <div>
+            <dt>Public</dt>
+            <dd>${escapeHtml(a.publicLabel)}</dd>
+          </div>
+        </dl>
+
+        <div class="lcse-card-footer">
+          <div class="lcse-card-progress">
+            <p class="progress-label"><span>${escapeHtml(a.collecteLabel)}</span></p>
+            <div class="progress"><div class="progress-bar" style="width:${a.pct}%"></div></div>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}">Soutenir cette action</button>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  // combo: { open: boolean, query: string } — état transitoire du champ de
+  // recherche (voir main.js). selectedValue: la valeur retenue pour ce filtre.
+  function comboOptionsHtml(options, query, selectedValue) {
+    const filtered = filterOptionsByQuery(options, query);
+    if (!filtered.length) {
+      return `<li class="lcse-combo-empty" role="presentation">Aucun résultat</li>`;
+    }
+    return filtered
+      .map((opt) => `<li role="option" data-value="${escapeHtml(opt)}" class="lcse-combo-option ${opt === selectedValue ? "is-selected" : ""}">${escapeHtml(opt)}</li>`)
+      .join("");
+  }
+
+  function renderCombo(key, label, options, selectedValue, combo) {
+    const query = combo.open ? combo.query : "";
+    return `
+    <div class="form-group lcse-combo">
+      <label class="form-label" for="lcse-filter-${key}">${label}</label>
+      <div class="lcse-combo-wrap">
+        <input
+          id="lcse-filter-${key}"
+          class="form-control"
+          type="text"
+          autocomplete="off"
+          role="combobox"
+          aria-expanded="${combo.open ? "true" : "false"}"
+          aria-autocomplete="list"
+          data-filter="${key}"
+          value="${escapeHtml(combo.open ? combo.query : selectedValue)}"
+        >
+        <ul class="lcse-combo-list ${combo.open ? "" : "lcse-hidden"}" data-combo-list="${key}" role="listbox">
+          ${comboOptionsHtml(options, query, selectedValue)}
+        </ul>
+      </div>
+    </div>`;
+  }
+
+  function renderSentPanel(action) {
+    return `
+    <div class="modal-body lcse-sent-body">
+      <h3>Demande transmise</h3>
+      <p>La structure porteuse de « ${escapeHtml(action.intitule)} » vous répondra sous cinq jours ouvrés. Une copie de votre demande a été adressée au référent France Travail du territoire.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-action="close">Fermer</button>
+    </div>`;
+  }
+
+  // uiState: { submitting: boolean, submitError: string }
+  function renderFormPanel(action, uiState) {
+    return `
+    <div class="lcse-modal-header">
+      <p class="lcse-modal-kicker">Soutenir une action</p>
+      <h3 class="modal-title">${escapeHtml(action.intitule)}</h3>
+      <p class="lcse-modal-meta">${escapeHtml(action.villeLabel)} · ${escapeHtml(action.federationLabel)}</p>
+    </div>
+    <form id="lcse-support-form">
+      <div class="modal-body lcse-form-body">
+        ${uiState.submitError ? `<div class="alert alert-error" role="alert"><div class="alert-body"><p class="alert-content">${escapeHtml(uiState.submitError)}</p></div></div>` : ""}
+        <div class="form-group">
+          <label class="form-label" for="f-organisation">Organisation</label>
+          <input id="f-organisation" name="organisation" class="form-control" placeholder="Nom du financeur" required>
+        </div>
+        <div class="lcse-modal-row">
+          <div class="form-group">
+            <label class="form-label" for="f-prenom">Prénom</label>
+            <input id="f-prenom" name="prenom" class="form-control" placeholder="Prénom" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-nom">Nom</label>
+            <input id="f-nom" name="nom" class="form-control" placeholder="Nom" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-email">Adresse électronique</label>
+          <input id="f-email" name="email" type="email" class="form-control" placeholder="nom@organisation.fr" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-telephone">Téléphone</label>
+          <input id="f-telephone" name="telephone" type="tel" class="form-control" placeholder="06 12 34 56 78">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-montant">Montant envisagé (facultatif)</label>
+          <input id="f-montant" name="montant" type="number" min="0" step="1" class="form-control" placeholder="en euros">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-message">Message</label>
+          <textarea id="f-message" name="message" class="form-control" rows="4" placeholder="Précisez la nature du soutien : financement, matériel, mécénat de compétences."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="close">Annuler</button>
+        <button type="submit" class="btn btn-primary" ${uiState.submitting ? "disabled" : ""}>${uiState.submitting ? "Envoi…" : "Envoyer"}</button>
+      </div>
+    </form>`;
+  }
+
+  // action: l'action ouverte, ou null si la modale est fermée.
+  function renderModal(action, uiState) {
+    const open = !!action;
+    return `
+    <div class="modal-backdrop ${open ? "show" : ""}" data-action="close" ${open ? "" : "hidden"}></div>
+    <div class="modal lcse-modal ${open ? "show" : ""}" tabindex="-1" ${open ? "" : "hidden"}>
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          ${!open ? "" : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return {
+    renderEmptyState,
+    renderCard,
+    renderCombo,
+    comboOptionsHtml,
+    renderModal,
+    renderSentPanel,
+    renderFormPanel,
+  };
+});
+
+
+/* ---- src/main.js ---- */
+/*
+ * Point d'entrée du widget : câblage avec l'API Grist et le DOM. Tout ce
+ * qui est calcul pur vit dans logic.js, tout ce qui est gabarit HTML vit
+ * dans render.js — ce fichier ne fait que les appeler et gérer l'état
+ * mutable (filtres, modale) et les événements DOM.
+ *
+ * Chargé après logic.js et render.js (voir index.html) : `LCSE` est déjà
+ * peuplé quand ce script s'exécute.
+ */
+(function () {
+  "use strict";
+
+  const {
+    ALL, TABLES, FILTER_KEYS,
+    getFilterOptions, filterOptionsByQuery, buildActions,
+  } = window.LCSE;
+  const {
+    renderEmptyState, renderCard, renderCombo, comboOptionsHtml, renderModal,
+  } = window.LCSE;
+
+  const state = {
+    region: ALL,
+    dept: ALL,
+    fede: ALL,
+    club: ALL,
+    openActionId: null,
+    sent: false,
+    submitting: false,
+    submitError: "",
+  };
+
+  // État transitoire des combobox de recherche des filtres (texte tapé,
+  // liste ouverte/fermée) — distinct de `state`, qui ne garde que la valeur
+  // retenue pour chaque filtre.
+  const combo = {
+    region: { open: false, query: "" },
+    dept: { open: false, query: "" },
+    fede: { open: false, query: "" },
+    club: { open: false, query: "" },
+  };
+
+  let actions = []; // liste jointe et prête à l'affichage
+  let loaded = false;
+  let loadError = "";
+
+  const app = document.getElementById("app");
+
+  // ---------------------------------------------------------------------
+  // Chargement des données
+  // ---------------------------------------------------------------------
+
+  async function fetchAll() {
+    const [actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT, attachToken] = await Promise.all([
+      grist.docApi.fetchTable(TABLES.actions),
+      grist.docApi.fetchTable(TABLES.dr),
+      grist.docApi.fetchTable(TABLES.dd),
+      grist.docApi.fetchTable(TABLES.agences),
+      grist.docApi.fetchTable(TABLES.structures),
+      grist.docApi.fetchTable(TABLES.federations),
+      grist.docApi.fetchTable(TABLES.cofinancements),
+      grist.docApi.getAccessToken({ readOnly: true }).catch(() => null),
+    ]);
+
+    actions = buildActions(
+      { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT },
+      attachToken
+    );
+
+    loaded = true;
+    loadError = "";
+  }
+
+  // ---------------------------------------------------------------------
+  // Rendu
+  // ---------------------------------------------------------------------
+
+  function render() {
+    if (loadError) {
+      app.innerHTML = `
+      <div class="alert alert-error" role="alert">
+        <div class="alert-body">
+          <p class="alert-title">Impossible de charger les actions</p>
+          <p class="alert-content">${window.LCSE.escapeHtml(loadError)}</p>
+        </div>
+      </div>`;
+      return;
+    }
+
+    if (!loaded) {
+      app.innerHTML = `<div class="lcse-loading"><p>Chargement des actions…</p></div>`;
+      return;
+    }
+
+    const inRegion = state.region === ALL ? actions : actions.filter((a) => a.regionLabel === state.region);
+    const list = inRegion.filter((a) =>
+      (state.dept === ALL || a.deptLabel === state.dept) &&
+      (state.fede === ALL || a.federationLabel === state.fede) &&
+      (state.club === ALL || a.clubLabel === state.club)
+    );
+
+    const options = getFilterOptions(actions, state);
+
+    const countLabel = list.length === 0
+      ? "Aucune action ouverte au soutien"
+      : list.length === 1
+        ? "1 action ouverte au soutien"
+        : `${list.length} actions ouvertes au soutien`;
+
+    const openAction = actions.find((a) => a.id === state.openActionId) || null;
+
+    app.innerHTML = `
+    <div class="lcse-title-row">
+      <div class="lcse-title-bar"></div>
+      <h1 class="lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
+    </div>
+
+    <section class="lcse-filters">
+      <div class="lcse-filters-head">
+        <h2 class="lcse-filters-title">Filtres</h2>
+        <button type="button" class="lcse-reset-btn" data-action="reset">Réinitialiser</button>
+      </div>
+      <div class="lcse-filters-grid">
+        ${renderCombo("region", "Région", options.region, state.region, combo.region)}
+        ${renderCombo("dept", "Département", options.dept, state.dept, combo.dept)}
+        ${renderCombo("fede", "Fédération", options.fede, state.fede, combo.fede)}
+        ${renderCombo("club", "Club", options.club, state.club, combo.club)}
+      </div>
+    </section>
+
+    <p class="lcse-count">${countLabel}</p>
+
+    ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${list.map(renderCard).join("")}</div>`}
+
+    ${renderModal(openAction, state)}
+  `;
+
+    bindEvents();
+  }
+
+  // ---------------------------------------------------------------------
+  // Événements
+  // ---------------------------------------------------------------------
+
+  function bindEvents() {
+    app.querySelectorAll("[data-filter]").forEach((el) => {
+      const key = el.getAttribute("data-filter");
+
+      el.addEventListener("focus", () => {
+        combo[key].open = true;
+        combo[key].query = "";
+        el.select();
+        updateComboList(key);
+      });
+
+      el.addEventListener("input", () => {
+        combo[key].query = el.value;
+        updateComboList(key);
+      });
+
+      el.addEventListener("blur", () => {
+        setTimeout(() => {
+          combo[key].open = false;
+          combo[key].query = "";
+          render();
+        }, 100);
+      });
+
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          combo[key].open = false;
+          combo[key].query = "";
+          el.blur();
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          const options = getFilterOptions(actions, state)[key];
+          const [first] = filterOptionsByQuery(options, combo[key].query);
+          if (first !== undefined) selectFilterValue(key, first);
+        }
+      });
+    });
+
+    app.querySelectorAll("[data-combo-list]").forEach((listEl) => {
+      const key = listEl.getAttribute("data-combo-list");
+      // Empêche l'input de perdre le focus (et donc la liste de se fermer)
+      // avant que le clic sur une option n'ait pu être traité.
+      listEl.addEventListener("mousedown", (e) => e.preventDefault());
+      listEl.addEventListener("click", (e) => {
+        const li = e.target.closest("[data-value]");
+        if (!li) return;
+        selectFilterValue(key, li.getAttribute("data-value"));
+      });
+    });
+
+    app.querySelectorAll('[data-action="reset"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
+        FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="support"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.openActionId = Number(el.getAttribute("data-id"));
+        state.sent = false;
+        state.submitError = "";
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="close"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.openActionId = null;
+        state.sent = false;
+        state.submitError = "";
+        render();
+      });
+    });
+
+    const modalContent = app.querySelector(".modal-content");
+    if (modalContent) modalContent.addEventListener("click", (e) => e.stopPropagation());
+
+    const form = document.getElementById("lcse-support-form");
+    if (form) form.addEventListener("submit", onSubmitForm);
+  }
+
+  // Ne met à jour que la liste déroulante d'un combobox (pas tout `app`),
+  // pour ne pas faire perdre le focus/curseur de l'input pendant la frappe.
+  function updateComboList(key) {
+    const listEl = app.querySelector(`[data-combo-list="${key}"]`);
+    const inputEl = document.getElementById(`lcse-filter-${key}`);
+    if (!listEl || !inputEl) return;
+    const options = getFilterOptions(actions, state)[key];
+    listEl.innerHTML = comboOptionsHtml(options, combo[key].query, state[key]);
+    listEl.classList.toggle("lcse-hidden", !combo[key].open);
+    inputEl.setAttribute("aria-expanded", combo[key].open ? "true" : "false");
+  }
+
+  function selectFilterValue(key, value) {
+    state[key] = value;
+    if (key === "region") state.dept = ALL;
+    combo[key].open = false;
+    combo[key].query = "";
+    render();
+  }
+
+  async function onSubmitForm(e) {
+    e.preventDefault();
+    const action = actions.find((a) => a.id === state.openActionId);
+    if (!action) return;
+
+    const data = new FormData(e.target);
+    const montantRaw = data.get("montant");
+
+    state.submitting = true;
+    state.submitError = "";
+    render();
+
+    try {
+      await grist.docApi.applyUserActions([[
+        "AddRecord",
+        TABLES.soutiens,
+        null,
+        {
+          Organisation: String(data.get("organisation") || "").trim(),
+          Prenom: String(data.get("prenom") || "").trim(),
+          Nom: String(data.get("nom") || "").trim(),
+          Email: String(data.get("email") || "").trim(),
+          Telephone: String(data.get("telephone") || "").trim(),
+          Montant: montantRaw ? Number(montantRaw) : null,
+          Message: String(data.get("message") || "").trim(),
+          Date: Math.floor(Date.now() / 1000),
+          Action_financee: action.id,
+        },
+      ]]);
+      state.submitting = false;
+      state.sent = true;
+      render();
+    } catch (err) {
+      state.submitting = false;
+      state.submitError = "L'envoi a échoué : " + (err && err.message ? err.message : "erreur inconnue") + ". Réessayez.";
+      render();
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Démarrage
+  // ---------------------------------------------------------------------
+
+  grist.ready({ requiredAccess: "full" });
+
+  render();
+
+  fetchAll()
+    .then(render)
+    .catch((err) => {
+      loaded = true;
+      loadError = (err && err.message) ? err.message : "Erreur inconnue lors du chargement.";
+      render();
+    });
+})();
+
+</script>
+</body>
+</html>

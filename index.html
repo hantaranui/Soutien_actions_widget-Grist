@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soutenez les clubs sportifs engagés</title>
+
+<!-- Design System France Travail (officiel) -->
+<link rel="stylesheet" href="https://cdn.francetravail.fr/studio/design-system/css/styles.css">
+<script src="https://cdn.francetravail.fr/webco/v1/ft-autoloader.js" fetchpriority="high"></script>
+
+<!-- API widget Grist (instance auto-hébergée) -->
+<script src="https://grist.aucarre.tech/grist-plugin-api.js"></script>
+
+<!-- BUILD:CSS -->
+<link rel="stylesheet" href="./styles.css">
+<!-- /BUILD:CSS -->
+</head>
+<body>
+
+<header class="lcse-header">
+  <img src="https://cdn.francetravail.fr/studio/logos/marque/Logo_France_Travail_RVB_Horizontal_Coul_Positif.svg" alt="France Travail" class="lcse-header-logo">
+  <img src="https://lesclubs-sportifs-engages.francetravail.fr/img/logo-lcse.svg" alt="Les clubs sportifs engagés" class="lcse-header-logo lcse-header-logo-lcse">
+</header>
+
+<main id="app" class="lcse-main">
+  <div class="lcse-loading" id="state-loading">
+    <p>Chargement des actions…</p>
+  </div>
+</main>
+
+<!-- BUILD:JS -->
+<script src="./src/logic.js"></script>
+<script src="./src/render.js"></script>
+<script src="./src/main.js"></script>
+<!-- /BUILD:JS -->
+</body>
+</html>
