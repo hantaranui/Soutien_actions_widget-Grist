@@ -814,7 +814,7 @@ body {
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
             <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
           </div>
-          <div class="lcse-card-photo">${a.photoUrl ? `<img src="${escapeHtml(a.photoUrl)}" alt="" onerror="this.parentElement.textContent='Photo'">` : "Photo"}</div>
+          ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
         </div>
 
         <p class="lcse-card-club">${escapeHtml(a.clubLabel)}</p>

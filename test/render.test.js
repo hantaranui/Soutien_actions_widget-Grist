@@ -34,17 +34,21 @@ describe("renderCard", () => {
     assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   });
 
-  test("affiche un placeholder texte quand il n'y a pas de photo, une <img> sinon", () => {
+  test("sans logo : aucun cadre vide, le titre prend toute la largeur", () => {
     const withoutPhoto = R.renderCard(SAMPLE_ACTION);
-    assert.match(withoutPhoto, />Photo</);
+    assert.ok(!withoutPhoto.includes("lcse-card-photo"));
+    assert.ok(!withoutPhoto.includes(">Photo<"));
+  });
 
+  test("avec logo : une <img> dans son cadre", () => {
     const withPhoto = R.renderCard({ ...SAMPLE_ACTION, photoUrl: "https://example.com/logo.png" });
+    assert.match(withPhoto, /class="lcse-card-photo"/);
     assert.match(withPhoto, /<img src="https:\/\/example\.com\/logo\.png"/);
   });
 
-  test("retombe sur le placeholder texte si l'image échoue à charger (pas d'icône cassée)", () => {
+  test("si l'image échoue à charger, son cadre disparaît (pas d'icône cassée)", () => {
     const html = R.renderCard({ ...SAMPLE_ACTION, photoUrl: "https://example.com/logo.png" });
-    assert.match(html, /onerror="this\.parentElement\.textContent='Photo'"/);
+    assert.match(html, /onerror="this\.closest\('\.lcse-card-photo'\)\.remove\(\)"/);
   });
 });
 
