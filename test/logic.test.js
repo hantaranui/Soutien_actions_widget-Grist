@@ -116,6 +116,24 @@ describe("photoUrlFor", () => {
     assert.equal(LCSE.photoUrlFor({ Logo: ["L"] }, token), null);
     assert.equal(LCSE.photoUrlFor({ Logo: null }, token), null);
   });
+
+  test("Logo_url est prioritaire et fonctionne sans jeton d'accès", () => {
+    const url = "https://exemple.fr/logo.png";
+    // Sans jeton : la pièce jointe est inutilisable, l'adresse suffit.
+    assert.equal(LCSE.photoUrlFor({ Logo_url: url, Logo: null }, null), url);
+    // Avec une pièce jointe aussi disponible, l'adresse passe devant.
+    assert.equal(LCSE.photoUrlFor({ Logo_url: url, Logo: ["L", 42] }, token), url);
+    // Espaces superflus tolérés.
+    assert.equal(LCSE.photoUrlFor({ Logo_url: "  " + url + "  " }, null), url);
+  });
+
+  test("Logo_url vide ou non http(s) est ignorée (anti-injection)", () => {
+    const attach = "https://grist.aucarre.tech/api/docs/DOC/attachments/42/download?auth=abc123";
+    assert.equal(LCSE.photoUrlFor({ Logo_url: "", Logo: ["L", 42] }, token), attach);
+    assert.equal(LCSE.photoUrlFor({ Logo_url: "javascript:alert(1)", Logo: ["L", 42] }, token), attach);
+    assert.equal(LCSE.photoUrlFor({ Logo_url: "data:image/png;base64,AAAA" }, null), null);
+    assert.equal(LCSE.photoUrlFor({ Logo_url: "pas une adresse" }, null), null);
+  });
 });
 
 describe("buildActions", () => {

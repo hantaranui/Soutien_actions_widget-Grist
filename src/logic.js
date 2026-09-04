@@ -92,8 +92,28 @@
     return map;
   }
 
+  // Seules ces adresses sont acceptées comme logo : on refuse notamment les
+  // "javascript:" et "data:" qui pourraient être injectés via la donnée.
+  function isSafeImageUrl(value) {
+    return /^https?:\/\//i.test(String(value || "").trim());
+  }
+
+  /**
+   * Adresse du logo d'un club, par ordre de préférence :
+   *  1. la colonne texte `Logo_url` de Structures — une simple adresse
+   *     d'image, qui ne dépend d'aucun jeton ni permission et fonctionne
+   *     donc sur n'importe quelle instance Grist ;
+   *  2. à défaut, la pièce jointe `Logo`, qui exige un jeton d'accès
+   *     (grist.docApi.getAccessToken) — indisponible sur certaines
+   *     instances, auquel cas attachToken vaut null et on renvoie null.
+   */
   function photoUrlFor(structure, attachToken) {
-    if (!structure || !attachToken) return null;
+    if (!structure) return null;
+
+    const url = structure.Logo_url;
+    if (isSafeImageUrl(url)) return String(url).trim();
+
+    if (!attachToken) return null;
     const ids = unpackList(structure.Logo);
     if (!ids.length) return null;
     return `${attachToken.baseUrl}/attachments/${ids[0]}/download?auth=${attachToken.token}`;
