@@ -32,6 +32,36 @@ body {
   font-family: Marianne, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+/* Sur mobile, le widget est souvent affiché dans un cadre (iframe) dont la
+   hauteur est fixée par Grist. Si notre page dépasse cette hauteur, iOS ne
+   permet pas toujours de faire défiler l'intérieur du cadre : tout ce qui
+   dépasse devient inatteignable. On force donc la page à ne jamais dépasser
+   la hauteur qu'on lui donne, et c'est la zone de contenu qui défile
+   elle-même (avec le défilement tactile iOS activé explicitement). */
+@media (max-width: 680px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lcse-header {
+    flex: 0 0 auto;
+  }
+
+  .lcse-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
 .lcse-header {
   background: #fff;
   border-bottom: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
@@ -945,7 +975,10 @@ body {
     sent: false,
     submitting: false,
     submitError: "",
-    filtersOpen: true,
+    // Filtres repliés d'emblée sur petit écran (ils y prennent toute la
+    // hauteur visible), dépliés sur grand écran où la place ne manque pas.
+    filtersOpen: !(typeof window !== "undefined" && window.matchMedia
+      && window.matchMedia("(max-width: 680px)").matches),
   };
 
   // État transitoire des combobox de recherche des filtres (texte tapé,

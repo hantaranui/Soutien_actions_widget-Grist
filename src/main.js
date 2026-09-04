@@ -27,7 +27,10 @@
     sent: false,
     submitting: false,
     submitError: "",
-    filtersOpen: true,
+    // Filtres repliés d'emblée sur petit écran (ils y prennent toute la
+    // hauteur visible), dépliés sur grand écran où la place ne manque pas.
+    filtersOpen: !(typeof window !== "undefined" && window.matchMedia
+      && window.matchMedia("(max-width: 680px)").matches),
   };
 
   // État transitoire des combobox de recherche des filtres (texte tapé,
