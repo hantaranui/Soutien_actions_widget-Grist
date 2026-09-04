@@ -29,6 +29,11 @@
   </div>
 </main>
 
+<!-- La modale vit hors de <main> : à l'intérieur d'une zone qui défile,
+     iOS ancre les éléments en position fixe sur cette zone au lieu de
+     l'écran, et la modale suivrait le défilement. -->
+<div id="lcse-modal-root"></div>
+
 <!-- BUILD:JS -->
 <script src="./src/logic.js"></script>
 <script src="./src/render.js"></script>

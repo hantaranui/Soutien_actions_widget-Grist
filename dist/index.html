@@ -59,7 +59,10 @@ body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    /* Pas de -webkit-overflow-scrolling:touch ici : sur iOS il fait de
+       cette zone le référentiel des éléments en position fixe, ce qui
+       décrochait la modale. Le défilement fluide est natif depuis iOS 13,
+       cette propriété n'apporte plus rien. */
     overscroll-behavior: contain;
   }
 }
@@ -589,6 +592,11 @@ body {
   </div>
 </main>
 
+<!-- La modale vit hors de <main> : à l'intérieur d'une zone qui défile,
+     iOS ancre les éléments en position fixe sur cette zone au lieu de
+     l'écran, et la modale suivrait le défilement. -->
+<div id="lcse-modal-root"></div>
+
 <script>
 /* ---- src/logic.js ---- */
 /*
@@ -1081,6 +1089,10 @@ body {
   let loadError = "";
 
   const app = document.getElementById("app");
+  // La modale est rendue hors de <main> (voir index.html) : sur iOS, une
+  // zone qui défile devient le référentiel des éléments en position fixe,
+  // et la modale se mettrait à défiler avec le contenu.
+  const modalRoot = document.getElementById("lcse-modal-root");
 
   // ---------------------------------------------------------------------
   // Chargement des données
@@ -1170,9 +1182,9 @@ body {
     <p class="lcse-count">${countLabel}</p>
 
     ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${list.map(renderCard).join("")}</div>`}
-
-    ${renderModal(openAction, state)}
   `;
+
+    modalRoot.innerHTML = renderModal(openAction, state);
 
     bindEvents();
   }
@@ -1255,7 +1267,7 @@ body {
       });
     });
 
-    app.querySelectorAll('[data-action="close"]').forEach((el) => {
+    modalRoot.querySelectorAll('[data-action="close"]').forEach((el) => {
       el.addEventListener("click", () => {
         state.openActionId = null;
         state.sent = false;
@@ -1264,7 +1276,7 @@ body {
       });
     });
 
-    const modalContent = app.querySelector(".modal-content");
+    const modalContent = modalRoot.querySelector(".modal-content");
     if (modalContent) modalContent.addEventListener("click", (e) => e.stopPropagation());
 
     const form = document.getElementById("lcse-support-form");

@@ -48,6 +48,10 @@
   let loadError = "";
 
   const app = document.getElementById("app");
+  // La modale est rendue hors de <main> (voir index.html) : sur iOS, une
+  // zone qui défile devient le référentiel des éléments en position fixe,
+  // et la modale se mettrait à défiler avec le contenu.
+  const modalRoot = document.getElementById("lcse-modal-root");
 
   // ---------------------------------------------------------------------
   // Chargement des données
@@ -137,9 +141,9 @@
     <p class="lcse-count">${countLabel}</p>
 
     ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${list.map(renderCard).join("")}</div>`}
-
-    ${renderModal(openAction, state)}
   `;
+
+    modalRoot.innerHTML = renderModal(openAction, state);
 
     bindEvents();
   }
@@ -222,7 +226,7 @@
       });
     });
 
-    app.querySelectorAll('[data-action="close"]').forEach((el) => {
+    modalRoot.querySelectorAll('[data-action="close"]').forEach((el) => {
       el.addEventListener("click", () => {
         state.openActionId = null;
         state.sent = false;
@@ -231,7 +235,7 @@
       });
     });
 
-    const modalContent = app.querySelector(".modal-content");
+    const modalContent = modalRoot.querySelector(".modal-content");
     if (modalContent) modalContent.addEventListener("click", (e) => e.stopPropagation());
 
     const form = document.getElementById("lcse-support-form");

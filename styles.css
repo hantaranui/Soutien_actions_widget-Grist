@@ -44,7 +44,10 @@ body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    /* Pas de -webkit-overflow-scrolling:touch ici : sur iOS il fait de
+       cette zone le référentiel des éléments en position fixe, ce qui
+       décrochait la modale. Le défilement fluide est natif depuis iOS 13,
+       cette propriété n'apporte plus rien. */
     overscroll-behavior: contain;
   }
 }
