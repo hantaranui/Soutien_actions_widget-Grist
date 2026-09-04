@@ -229,10 +229,10 @@ body {
   background: #fff;
   border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
   border-radius: var(--ft--button-border-radius, 0.75rem);
-  /* Ombre reprise du Design System France Travail (celle de ses propres
-     cartes) : c'est elle qui détache visuellement la carte du fond, la
-     bordure seule ne suffit pas sur un fond clair. */
-  box-shadow: 0 0 8px 0 rgba(15, 20, 56, 0.16);
+  /* Ombre dérivée de celle du Design System France Travail (0 0 8px
+     rgba(15,20,56,.16)), légèrement accentuée et décalée vers le bas pour
+     bien détacher la carte sur le fond clair. */
+  box-shadow: 0 2px 12px 0 rgba(15, 20, 56, 0.22);
   display: flex;
   flex-direction: column;
   overflow: hidden;
