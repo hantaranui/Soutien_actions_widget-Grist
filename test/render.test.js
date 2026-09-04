@@ -41,6 +41,11 @@ describe("renderCard", () => {
     const withPhoto = R.renderCard({ ...SAMPLE_ACTION, photoUrl: "https://example.com/logo.png" });
     assert.match(withPhoto, /<img src="https:\/\/example\.com\/logo\.png"/);
   });
+
+  test("retombe sur le placeholder texte si l'image échoue à charger (pas d'icône cassée)", () => {
+    const html = R.renderCard({ ...SAMPLE_ACTION, photoUrl: "https://example.com/logo.png" });
+    assert.match(html, /onerror="this\.parentElement\.textContent='Photo'"/);
+  });
 });
 
 describe("comboOptionsHtml", () => {

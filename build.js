@@ -35,14 +35,28 @@ function replaceBlock(html, marker, replacement) {
   return html.replace(match[0], replacement);
 }
 
+// L'HTML parser du navigateur referme une balise <script>/<style> dès qu'il
+// voit </script ou </style dans le texte — y compris à l'intérieur d'un
+// commentaire ou d'une chaîne JS, où ce n'est qu'un bout de texte pour le
+// moteur JS. Sans cet échappement, un simple commentaire mentionnant
+// "<script>...</script>" (comme dans src/logic.js) coupe le vrai script en
+// deux et corrompt toute la page. `<\/script` reste strictement identique
+// pour le moteur JS (\/ vaut /), mais plus pour le parseur HTML.
+function escapeClosingTag(source, tagName) {
+  const re = new RegExp(`</(${tagName})`, "gi");
+  return source.replace(re, "<\\/$1");
+}
+
 function build() {
   let html = fs.readFileSync(SRC_HTML, "utf8");
 
-  const css = fs.readFileSync(path.join(ROOT, "styles.css"), "utf8");
+  const css = escapeClosingTag(fs.readFileSync(path.join(ROOT, "styles.css"), "utf8"), "style");
   html = replaceBlock(html, "CSS", `<style>\n${css}\n</style>`);
 
   const jsFiles = ["src/logic.js", "src/render.js", "src/main.js"];
-  const js = jsFiles.map((f) => `/* ---- ${f} ---- */\n${fs.readFileSync(path.join(ROOT, f), "utf8")}`).join("\n\n");
+  const js = jsFiles
+    .map((f) => `/* ---- ${f} ---- */\n${escapeClosingTag(fs.readFileSync(path.join(ROOT, f), "utf8"), "script")}`)
+    .join("\n\n");
   html = replaceBlock(html, "JS", `<script>\n${js}\n</script>`);
 
   fs.mkdirSync(path.dirname(OUT_HTML), { recursive: true });

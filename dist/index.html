@@ -39,22 +39,34 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
 }
 
 .lcse-header-logo {
   height: 40px;
   width: auto;
+  max-width: 100%;
 }
 
 .lcse-header-logo-lcse {
   height: 64px;
 }
 
+@media (max-width: 480px) {
+  .lcse-header { padding: 0.75rem 1rem; gap: 0.75rem 1rem; }
+  .lcse-header-logo { height: 28px; }
+  .lcse-header-logo-lcse { height: 44px; }
+}
+
 .lcse-main {
   max-width: 1440px;
   margin: 0 auto;
   padding: 2rem 1.25rem 3.5rem;
+}
+
+@media (max-width: 480px) {
+  .lcse-main { padding: 1.5rem 0.875rem 2.5rem; }
 }
 
 .lcse-loading,
@@ -84,6 +96,10 @@ body {
   font-size: var(--ft--font-size-display-4, 1.75rem);
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+@media (max-width: 480px) {
+  .lcse-title { font-size: 1.375rem; }
 }
 
 /* Filtres */
@@ -191,6 +207,15 @@ body {
   margin-bottom: 1.25rem;
 }
 
+.lcse-card-heading {
+  /* Sans ça, un flex item contenant du texte refuse de rétrécir sous sa
+     largeur "naturelle" et peut déborder sur un écran étroit. Ciblé par
+     classe (pas par `.lcse-card-top > div`) pour ne jamais accrocher
+     .lcse-card-photo, qui est aussi une div enfant directe. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .lcse-card-date {
   margin: 0 0 0.5rem;
   font-size: 0.75rem;
@@ -250,6 +275,10 @@ body {
   border-top: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
 }
 
+@media (max-width: 380px) {
+  .lcse-card-meta { grid-template-columns: 1fr; }
+}
+
 .lcse-card-meta dt {
   font-size: 0.6875rem;
   font-weight: 600;
@@ -268,9 +297,22 @@ body {
 .lcse-card-footer {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.75rem 1.25rem;
+  flex-wrap: wrap;
   margin-top: auto;
   margin-bottom: 1.25rem;
+}
+
+.lcse-card-footer .btn {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  /* En dessous de cette largeur, la jauge et le bouton s'empilent plutôt
+     que de se serrer côte à côte. */
+  .lcse-card-progress { flex-basis: 100%; }
+  .lcse-card-footer .btn { flex-basis: 100%; }
 }
 
 .lcse-card-progress { flex: 1; min-width: 0; }
@@ -289,6 +331,25 @@ body {
 .modal-backdrop.show,
 .lcse-modal.show {
   display: block;
+}
+
+/* Le Design System attend que .modal-body et .modal-footer soient des
+   enfants DIRECTS de .modal-content pour que sa mise en page flex
+   (entête / corps qui défile / pied de page fixe, via
+   .modal-dialog-scrollable) fonctionne. Notre <form> — nécessaire pour
+   la soumission — casse cette chaîne ; display:contents le fait
+   disparaître de la boîte de mise en page sans perdre son rôle
+   fonctionnel, comme si .modal-body/.modal-footer étaient directement
+   dans .modal-content. */
+#lcse-support-form {
+  display: contents;
+}
+
+/* Même piège flexbox classique que d'habitude : sans min-height:0, .modal-body
+   (flex:1 1 auto côté DS) refuse de rétrécir sous la hauteur naturelle de
+   son contenu et empêche le pied de page d'être visible sur un écran bas. */
+.lcse-modal .modal-body {
+  min-height: 0;
 }
 
 .lcse-modal-header {
@@ -418,7 +479,7 @@ body {
  * (voir test/logic.test.js) sans navigateur ni widget Grist réel.
  *
  * Chargé à la fois :
- *  - dans le navigateur, comme <script src="./src/logic.js"></script>
+ *  - dans le navigateur, comme <script src="./src/logic.js"><\/script>
  *    classique (pas de module) : les fonctions sont exposées sur
  *    `window.LCSE`.
  *  - sous Node, via require("./logic.js") pour les tests : `module` existe
@@ -668,11 +729,11 @@ body {
     <article class="lcse-card">
       <div class="lcse-card-body">
         <div class="lcse-card-top">
-          <div>
+          <div class="lcse-card-heading">
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
             <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
           </div>
-          <div class="lcse-card-photo">${a.photoUrl ? `<img src="${escapeHtml(a.photoUrl)}" alt="">` : "Photo"}</div>
+          <div class="lcse-card-photo">${a.photoUrl ? `<img src="${escapeHtml(a.photoUrl)}" alt="" onerror="this.parentElement.textContent='Photo'">` : "Photo"}</div>
         </div>
 
         <p class="lcse-card-club">${escapeHtml(a.clubLabel)}</p>
@@ -809,7 +870,7 @@ body {
     return `
     <div class="modal-backdrop ${open ? "show" : ""}" data-action="close" ${open ? "" : "hidden"}></div>
     <div class="modal lcse-modal ${open ? "show" : ""}" tabindex="-1" ${open ? "" : "hidden"}>
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
           ${!open ? "" : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState)}
         </div>

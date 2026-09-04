@@ -34,11 +34,11 @@
     <article class="lcse-card">
       <div class="lcse-card-body">
         <div class="lcse-card-top">
-          <div>
+          <div class="lcse-card-heading">
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
             <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
           </div>
-          <div class="lcse-card-photo">${a.photoUrl ? `<img src="${escapeHtml(a.photoUrl)}" alt="">` : "Photo"}</div>
+          <div class="lcse-card-photo">${a.photoUrl ? `<img src="${escapeHtml(a.photoUrl)}" alt="" onerror="this.parentElement.textContent='Photo'">` : "Photo"}</div>
         </div>
 
         <p class="lcse-card-club">${escapeHtml(a.clubLabel)}</p>
@@ -175,7 +175,7 @@
     return `
     <div class="modal-backdrop ${open ? "show" : ""}" data-action="close" ${open ? "" : "hidden"}></div>
     <div class="modal lcse-modal ${open ? "show" : ""}" tabindex="-1" ${open ? "" : "hidden"}>
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
           ${!open ? "" : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState)}
         </div>
