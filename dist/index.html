@@ -124,6 +124,31 @@ body {
   border-radius: var(--ft--button-border-radius, 0.75rem) var(--ft--button-border-radius, 0.75rem) 0 0;
 }
 
+.lcse-filters-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lcse-filters-toggle-chevron {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--ft--color-primary, #283276);
+  border-bottom: 2px solid var(--ft--color-primary, #283276);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.lcse-filters-toggle-chevron.is-open {
+  transform: rotate(45deg);
+}
+
 .lcse-filters-title {
   margin: 0;
   font-size: 0.75rem;
@@ -920,6 +945,7 @@ body {
     sent: false,
     submitting: false,
     submitError: "",
+    filtersOpen: true,
   };
 
   // État transitoire des combobox de recherche des filtres (texte tapé,
@@ -1009,10 +1035,13 @@ body {
 
     <section class="lcse-filters">
       <div class="lcse-filters-head">
-        <h2 class="lcse-filters-title">Filtres</h2>
+        <button type="button" class="lcse-filters-toggle" data-action="toggle-filters" aria-expanded="${state.filtersOpen ? "true" : "false"}">
+          <span class="lcse-filters-toggle-chevron ${state.filtersOpen ? "is-open" : ""}" aria-hidden="true"></span>
+          <h2 class="lcse-filters-title">Filtres</h2>
+        </button>
         <button type="button" class="lcse-reset-btn" data-action="reset">Réinitialiser</button>
       </div>
-      <div class="lcse-filters-grid">
+      <div class="lcse-filters-grid ${state.filtersOpen ? "" : "lcse-hidden"}">
         ${renderCombo("region", "Région", options.region, state.region, combo.region)}
         ${renderCombo("dept", "Département", options.dept, state.dept, combo.dept)}
         ${renderCombo("fede", "Fédération", options.fede, state.fede, combo.fede)}
@@ -1088,6 +1117,13 @@ body {
       el.addEventListener("click", () => {
         state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
         FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="toggle-filters"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.filtersOpen = !state.filtersOpen;
         render();
       });
     });

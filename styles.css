@@ -109,6 +109,31 @@ body {
   border-radius: var(--ft--button-border-radius, 0.75rem) var(--ft--button-border-radius, 0.75rem) 0 0;
 }
 
+.lcse-filters-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lcse-filters-toggle-chevron {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--ft--color-primary, #283276);
+  border-bottom: 2px solid var(--ft--color-primary, #283276);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.lcse-filters-toggle-chevron.is-open {
+  transform: rotate(45deg);
+}
+
 .lcse-filters-title {
   margin: 0;
   font-size: 0.75rem;

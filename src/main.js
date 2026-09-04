@@ -27,6 +27,7 @@
     sent: false,
     submitting: false,
     submitError: "",
+    filtersOpen: true,
   };
 
   // État transitoire des combobox de recherche des filtres (texte tapé,
@@ -116,10 +117,13 @@
 
     <section class="lcse-filters">
       <div class="lcse-filters-head">
-        <h2 class="lcse-filters-title">Filtres</h2>
+        <button type="button" class="lcse-filters-toggle" data-action="toggle-filters" aria-expanded="${state.filtersOpen ? "true" : "false"}">
+          <span class="lcse-filters-toggle-chevron ${state.filtersOpen ? "is-open" : ""}" aria-hidden="true"></span>
+          <h2 class="lcse-filters-title">Filtres</h2>
+        </button>
         <button type="button" class="lcse-reset-btn" data-action="reset">Réinitialiser</button>
       </div>
-      <div class="lcse-filters-grid">
+      <div class="lcse-filters-grid ${state.filtersOpen ? "" : "lcse-hidden"}">
         ${renderCombo("region", "Région", options.region, state.region, combo.region)}
         ${renderCombo("dept", "Département", options.dept, state.dept, combo.dept)}
         ${renderCombo("fede", "Fédération", options.fede, state.fede, combo.fede)}
@@ -195,6 +199,13 @@
       el.addEventListener("click", () => {
         state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
         FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="toggle-filters"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.filtersOpen = !state.filtersOpen;
         render();
       });
     });
