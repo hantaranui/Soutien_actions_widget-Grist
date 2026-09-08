@@ -30,6 +30,16 @@
 
   const FILTER_KEYS = ["region", "dept", "fede", "club"];
 
+  // Les deux onglets. TAB_OPEN est celui d'arrivée : c'est la raison d'être
+  // du widget (trouver une action à cofinancer) ; TAB_FUNDED sert à montrer
+  // ce qui a abouti, sans polluer la liste utile.
+  const TAB_OPEN = "a-soutenir";
+  const TAB_FUNDED = "financees";
+  const TABS = [
+    { key: TAB_OPEN, label: "Actions à soutenir" },
+    { key: TAB_FUNDED, label: "Actions déjà financées" },
+  ];
+
   // Nombre d'actions affichées d'emblée, et taille de chaque lot ajouté
   // ensuite par le bouton « Charger 24 actions de plus ». Toutes les
   // actions restent chargées en mémoire : on ne limite que ce qui est
@@ -144,9 +154,11 @@
    * (Club, Agence, Fédération, DR, DD), calcul de la jauge de financement à
    * partir de Cofinancements, et labels formatés en français.
    *
-   * Règles métier qui retirent une action du résultat :
-   *  - déjà financée à 100 % (collecte >= budget) ;
-   *  - statut "Réalisée" ou "Annulée".
+   * Seul le statut retire une action du résultat : "Réalisée" ou "Annulée".
+   * Les actions financées à 100 % sont conservées et marquées `financee`,
+   * pour alimenter l'onglet "Actions déjà financées" — elles étaient
+   * auparavant écartées d'office, avant que le client demande de les
+   * montrer à part plutôt que de les masquer.
    *
    * @param {object} tables { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT }
    *   — chacune au format renvoyé par grist.docApi.fetchTable.
@@ -187,6 +199,7 @@
         return {
           id: a.id,
           intitule: a.Intitule || "(sans titre)",
+          financee: pct >= 100,
           statut: a.Statut || "",
           dateLabel: dateLabelFor(a),
           clubLabel: structure ? structure.Nom : "Club non renseigné",
@@ -203,9 +216,9 @@
           collecteLabel: eur(collecte) + " cofinancés sur " + eur(budget),
         };
       })
-      // Une action déjà financée à 100 %, ou marquée Réalisée/Annulée,
-      // n'est plus ouverte au soutien.
-      .filter((a) => a.pct < 100 && !HIDDEN_STATUTS.has(a.statut));
+      // Une action Réalisée ou Annulée n'a plus rien à faire dans le widget,
+      // quel que soit son financement.
+      .filter((a) => !HIDDEN_STATUTS.has(a.statut));
   }
 
   /**
@@ -231,6 +244,24 @@
     };
   }
 
+  // Répartit les actions selon l'onglet : financées à 100 % d'un côté,
+  // toutes les autres de l'autre. Aucune action n'apparaît dans les deux.
+  function actionsForTab(actions, tab) {
+    const wantFunded = tab === TAB_FUNDED;
+    return actions.filter((a) => !!a.financee === wantFunded);
+  }
+
+  // Le compteur au-dessus de la liste : la formulation dépend de l'onglet,
+  // "ouverte au soutien" n'ayant aucun sens pour une action déjà financée.
+  function countLabelFor(tab, n) {
+    if (tab === TAB_FUNDED) {
+      if (n === 0) return "Aucune action financée à 100 %";
+      return n === 1 ? "1 action financée à 100 %" : `${n} actions financées à 100 %`;
+    }
+    if (n === 0) return "Aucune action ouverte au soutien";
+    return n === 1 ? "1 action ouverte au soutien" : `${n} actions ouvertes au soutien`;
+  }
+
   // Options disponibles pour chaque filtre. Le département est limité à la
   // région choisie ; fédération et club restent globaux (comportement du
   // prototype d'origine, conservé tel quel).
@@ -249,6 +280,9 @@
     TABLES,
     FILTER_KEYS,
     PAGE_SIZE,
+    TABS,
+    TAB_OPEN,
+    TAB_FUNDED,
     escapeHtml,
     eur,
     formatDateFr,
@@ -259,6 +293,8 @@
     indexById,
     photoUrlFor,
     buildActions,
+    actionsForTab,
+    countLabelFor,
     paginate,
     getFilterOptions,
   };

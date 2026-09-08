@@ -188,9 +188,19 @@ describe("buildActions", () => {
     assert.equal(a1.dateLabel, "16 septembre 2026"); // Statut "Planifiée" -> Date exacte
   });
 
-  test("exclut une action déjà financée à 100% (règle métier du client)", () => {
+  test("conserve une action financée à 100% et la marque `financee`", () => {
+    // Ancienne règle : ces actions étaient écartées. Le client a demandé de
+    // les montrer dans un onglet séparé, donc buildActions les garde.
     const actions = LCSE.buildActions(fixtureTables(), null);
-    assert.equal(actions.find((a) => a.id === 2), undefined);
+    const a2 = actions.find((a) => a.id === 2);
+    assert.ok(a2, "l'action financée à 100% doit être présente");
+    assert.equal(a2.pct, 100);
+    assert.equal(a2.financee, true);
+  });
+
+  test("une action partiellement financée n'est pas marquée `financee`", () => {
+    const actions = LCSE.buildActions(fixtureTables(), null);
+    assert.equal(actions.find((a) => a.id === 1).financee, false);
   });
 
   test("retombe sur des libellés de repli quand les références sont vides", () => {
@@ -324,5 +334,61 @@ describe("paginate", () => {
     assert.deepEqual(p.page, []);
     assert.equal(p.total, 0);
     assert.equal(p.remaining, 0);
+  });
+});
+
+describe("actionsForTab", () => {
+  const actions = [
+    { id: 1, financee: false },
+    { id: 2, financee: true },
+    { id: 3, financee: false },
+    { id: 4, financee: true },
+  ];
+
+  test("l'onglet à soutenir ne garde que les actions non financées", () => {
+    const list = LCSE.actionsForTab(actions, LCSE.TAB_OPEN);
+    assert.deepEqual(list.map((a) => a.id), [1, 3]);
+  });
+
+  test("l'onglet des financées ne garde que celles à 100%", () => {
+    const list = LCSE.actionsForTab(actions, LCSE.TAB_FUNDED);
+    assert.deepEqual(list.map((a) => a.id), [2, 4]);
+  });
+
+  test("les deux onglets sont complémentaires : aucune action perdue ni en double", () => {
+    const a = LCSE.actionsForTab(actions, LCSE.TAB_OPEN).length;
+    const b = LCSE.actionsForTab(actions, LCSE.TAB_FUNDED).length;
+    assert.equal(a + b, actions.length);
+  });
+
+  test("une action sans champ financee compte comme à soutenir", () => {
+    // Robustesse : `financee` absent (undefined) ne doit pas faire
+    // disparaître l'action des deux onglets.
+    const list = LCSE.actionsForTab([{ id: 9 }], LCSE.TAB_OPEN);
+    assert.deepEqual(list.map((a) => a.id), [9]);
+  });
+});
+
+describe("countLabelFor", () => {
+  test("onglet à soutenir : accord en nombre", () => {
+    assert.equal(LCSE.countLabelFor(LCSE.TAB_OPEN, 0), "Aucune action ouverte au soutien");
+    assert.equal(LCSE.countLabelFor(LCSE.TAB_OPEN, 1), "1 action ouverte au soutien");
+    assert.equal(LCSE.countLabelFor(LCSE.TAB_OPEN, 7), "7 actions ouvertes au soutien");
+  });
+
+  test("onglet des financées : formulation adaptée", () => {
+    assert.equal(LCSE.countLabelFor(LCSE.TAB_FUNDED, 0), "Aucune action financée à 100 %");
+    assert.equal(LCSE.countLabelFor(LCSE.TAB_FUNDED, 1), "1 action financée à 100 %");
+    assert.equal(LCSE.countLabelFor(LCSE.TAB_FUNDED, 7), "7 actions financées à 100 %");
+  });
+});
+
+describe("TABS", () => {
+  test("deux onglets, celui à soutenir en premier (onglet d'arrivée)", () => {
+    assert.equal(LCSE.TABS.length, 2);
+    assert.equal(LCSE.TABS[0].key, LCSE.TAB_OPEN);
+    assert.equal(LCSE.TABS[0].label, "Actions à soutenir");
+    assert.equal(LCSE.TABS[1].key, LCSE.TAB_FUNDED);
+    assert.equal(LCSE.TABS[1].label, "Actions déjà financées");
   });
 });

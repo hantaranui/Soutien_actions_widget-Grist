@@ -206,6 +206,49 @@ body {
   .lcse-filters-grid { grid-template-columns: 1fr; }
 }
 
+/* Onglets (composant .nav-tabs du Design System) */
+
+.lcse-tabs {
+  /* Le Design System pose margin-bottom:-1px sur .nav-tabs pour que
+     l'onglet actif recouvre la bordure du panneau. On fournit cette
+     bordure ici, faute de .tab-content : sans elle, les onglets flottent. */
+  border-bottom: 1px solid rgba(18, 20, 55, 0.1);
+  margin: 0 0 1.25rem;
+}
+
+.lcse-tabs .nav-item {
+  /* Largeur du libellé (flex-grow:0), sinon chaque onglet occupe la moitié
+     de la ligne et se retrouve démesuré. flex-shrink:1 + min-width:0
+     autorisent le rétrécissement sur un widget étroit — .nav-tabs étant en
+     flex-wrap:nowrap, sans cela les libellés déborderaient. */
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.lcse-tabs .nav-link {
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.lcse-tabs .nav-link .nav-link-text {
+  /* Les libellés sont longs ("Actions déjà financées (12)") : on autorise
+     le retour à la ligne plutôt que la troncature. */
+  white-space: normal;
+}
+
+/* Pied de carte d'une action déjà financée : la mention remplace le
+   bouton "Soutenir", sans en prendre l'apparence — ce n'est pas une
+   action possible, juste un état. */
+.lcse-card-financed {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--ft--color-primary, #283276);
+}
+
 .lcse-count {
   margin: 0 0 1.25rem;
   font-size: 0.875rem;

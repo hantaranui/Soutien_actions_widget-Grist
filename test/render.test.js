@@ -128,3 +128,59 @@ describe("renderLoadMore", () => {
     assert.match(html, /Charger 1 action de plus/);
   });
 });
+
+describe("renderTabs", () => {
+  const TABS = [
+    { key: "a-soutenir", label: "Actions à soutenir" },
+    { key: "financees", label: "Actions déjà financées" },
+  ];
+  const counts = { "a-soutenir": 55, financees: 12 };
+
+  test("affiche les deux onglets avec leur nombre d'actions", () => {
+    const html = R.renderTabs(TABS, "a-soutenir", counts);
+    assert.match(html, /Actions à soutenir \(55\)/);
+    assert.match(html, /Actions déjà financées \(12\)/);
+    assert.match(html, /role="tablist"/);
+  });
+
+  test("marque l'onglet actif, et lui seul", () => {
+    const html = R.renderTabs(TABS, "a-soutenir", counts);
+    // aria-current déclenche l'apparence active du Design System.
+    assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
+    assert.match(html, /data-tab="a-soutenir"[\s\S]*?aria-selected="true"/);
+    assert.match(html, /data-tab="financees"[\s\S]*?aria-selected="false"/);
+  });
+
+  test("l'onglet actif suit le paramètre", () => {
+    const html = R.renderTabs(TABS, "financees", counts);
+    assert.match(html, /data-tab="financees"[\s\S]*?aria-selected="true"[\s\S]*?aria-current="page"/);
+    assert.match(html, /data-tab="a-soutenir"[\s\S]*?aria-selected="false"/);
+  });
+
+  test("un onglet vide affiche (0), pas une valeur absente", () => {
+    const html = R.renderTabs(TABS, "a-soutenir", { "a-soutenir": 3 });
+    assert.match(html, /Actions déjà financées \(0\)/);
+  });
+});
+
+describe("renderCard sur une action déjà financée", () => {
+  const FINANCEE = { ...SAMPLE_ACTION, financee: true, pct: 100, collecteLabel: "5 000 € cofinancés sur 5 000 €" };
+
+  test("pas de bouton Soutenir, mais la mention du résultat", () => {
+    const html = R.renderCard(FINANCEE);
+    assert.ok(!html.includes('data-action="support"'), "aucun bouton de soutien");
+    assert.match(html, /Financée à 100 %/);
+  });
+
+  test("la jauge reste affichée, à 100%", () => {
+    const html = R.renderCard(FINANCEE);
+    assert.match(html, /width:100%/);
+    assert.match(html, /5 000 € cofinancés sur 5 000 €/);
+  });
+
+  test("une action non financée garde son bouton", () => {
+    const html = R.renderCard({ ...SAMPLE_ACTION, financee: false });
+    assert.match(html, /data-action="support"/);
+    assert.ok(!html.includes("Financée à 100 %"));
+  });
+});

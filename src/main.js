@@ -11,14 +11,18 @@
   "use strict";
 
   const {
-    ALL, TABLES, FILTER_KEYS, PAGE_SIZE,
+    ALL, TABLES, FILTER_KEYS, PAGE_SIZE, TABS, TAB_OPEN,
     getFilterOptions, filterOptionsByQuery, buildActions, paginate,
+    actionsForTab, countLabelFor,
   } = window.LCSE;
   const {
-    renderEmptyState, renderCard, renderLoadMore, renderCombo, comboOptionsHtml, renderModal,
+    renderEmptyState, renderCard, renderTabs, renderLoadMore, renderCombo,
+    comboOptionsHtml, renderModal,
   } = window.LCSE;
 
   const state = {
+    // Onglet d'arrivée : les actions encore à financer, but du widget.
+    tab: TAB_OPEN,
     region: ALL,
     dept: ALL,
     fede: ALL,
@@ -103,21 +107,28 @@
       return;
     }
 
-    const inRegion = state.region === ALL ? actions : actions.filter((a) => a.regionLabel === state.region);
-    const list = inRegion.filter((a) =>
+    // Les filtres s'appliquent avant la répartition par onglet : on peut
+    // ainsi compter ce que contient chaque onglet sous les filtres courants
+    // et l'afficher sur les deux, plutôt que de laisser cliquer à l'aveugle.
+    const filtered = actions.filter((a) =>
+      (state.region === ALL || a.regionLabel === state.region) &&
       (state.dept === ALL || a.deptLabel === state.dept) &&
       (state.fede === ALL || a.federationLabel === state.fede) &&
       (state.club === ALL || a.clubLabel === state.club)
     );
 
-    const options = getFilterOptions(actions, state);
+    const counts = {};
+    for (const t of TABS) counts[t.key] = actionsForTab(filtered, t.key).length;
+
+    const list = actionsForTab(filtered, state.tab);
+
+    // Les options des filtres ne listent que les valeurs présentes dans
+    // l'onglet courant : proposer un club dont toutes les actions sont
+    // dans l'autre onglet mènerait à une liste vide.
+    const options = getFilterOptions(actionsForTab(actions, state.tab), state);
     const pagination = paginate(list, state.visibleCount, PAGE_SIZE);
 
-    const countLabel = list.length === 0
-      ? "Aucune action ouverte au soutien"
-      : list.length === 1
-        ? "1 action ouverte au soutien"
-        : `${list.length} actions ouvertes au soutien`;
+    const countLabel = countLabelFor(state.tab, list.length);
 
     const openAction = actions.find((a) => a.id === state.openActionId) || null;
 
@@ -142,6 +153,8 @@
         ${renderCombo("club", "Club", options.club, state.club, combo.club)}
       </div>
     </section>
+
+    ${renderTabs(TABS, state.tab, counts)}
 
     <p class="lcse-count">${countLabel}</p>
 
@@ -212,6 +225,7 @@
       el.addEventListener("click", () => {
         state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
         state.visibleCount = PAGE_SIZE;
+        // L'onglet n'est pas un filtre : "Réinitialiser" ne le change pas.
         FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
         render();
       });
@@ -220,6 +234,21 @@
     app.querySelectorAll('[data-action="toggle-filters"]').forEach((el) => {
       el.addEventListener("click", () => {
         state.filtersOpen = !state.filtersOpen;
+        render();
+      });
+    });
+
+    app.querySelectorAll("[data-tab]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const tab = el.getAttribute("data-tab");
+        if (tab === state.tab) return;
+        state.tab = tab;
+        // La pagination repart du premier lot : l'autre onglet n'a rien à
+        // voir avec ce qui était déroulé ici.
+        state.visibleCount = PAGE_SIZE;
+        // Les filtres sont conservés : c'est justement l'intérêt de voir
+        // les compteurs des deux onglets sur un même périmètre.
+        FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
         render();
       });
     });

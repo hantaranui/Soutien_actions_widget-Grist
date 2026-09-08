@@ -67,13 +67,54 @@
             <p class="progress-label"><span>${escapeHtml(a.collecteLabel)}</span></p>
             <div class="progress"><div class="progress-bar" style="width:${a.pct}%"></div></div>
           </div>
-          <!-- Libellé court pour laisser la place à la jauge ; aria-label
-               redonne le contexte aux lecteurs d'écran, qui annoncent
-               souvent les boutons hors de leur carte. -->
-          <button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}">Soutenir</button>
+          ${a.financee
+            // Proposer de cofinancer une action déjà bouclée n'a pas de
+            // sens : le bouton laisse place à la mention du résultat.
+            ? `<p class="lcse-card-financed">Financée à 100 %</p>`
+            // Libellé court pour laisser la place à la jauge ; aria-label
+            // redonne le contexte aux lecteurs d'écran, qui annoncent
+            // souvent les boutons hors de leur carte.
+            : `<button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}">Soutenir</button>`}
         </div>
       </div>
     </article>`;
+  }
+
+  /**
+   * Les deux onglets, avec le nombre d'actions que chacun contient sous
+   * les filtres courants — pour qu'on sache ce qu'on trouvera en face
+   * avant de cliquer.
+   *
+   * Classes du Design System France Travail (.nav-tabs/.nav-item/.nav-link),
+   * dont l'état actif s'accroche à [aria-current=page]. On garde en plus le
+   * couple role="tab"/aria-selected, sémantiquement correct pour des
+   * onglets qui filtrent une liste en place sans navigation : aria-current
+   * ne sert ici qu'à déclencher l'apparence du Design System.
+   *
+   * @param {Array<{key:string,label:string}>} tabs
+   * @param {string} activeKey
+   * @param {Object<string,number>} counts nombre d'actions par clé d'onglet.
+   */
+  function renderTabs(tabs, activeKey, counts) {
+    const items = tabs.map((t) => {
+      const active = t.key === activeKey;
+      const n = counts[t.key] || 0;
+      return `
+        <li class="nav-item" role="presentation">
+          <button
+            type="button"
+            class="nav-link"
+            role="tab"
+            data-tab="${escapeHtml(t.key)}"
+            aria-selected="${active ? "true" : "false"}"
+            ${active ? 'aria-current="page"' : ""}
+          >
+            <span class="nav-link-text">${escapeHtml(t.label)} (${n})</span>
+          </button>
+        </li>`;
+    }).join("");
+
+    return `<ul class="nav-tabs lcse-tabs" role="tablist">${items}</ul>`;
   }
 
   /**
@@ -208,6 +249,7 @@
   return {
     renderEmptyState,
     renderCard,
+    renderTabs,
     renderLoadMore,
     renderCombo,
     comboOptionsHtml,
