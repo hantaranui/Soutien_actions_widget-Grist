@@ -228,6 +228,22 @@ body {
   .lcse-grid { grid-template-columns: 1fr; }
 }
 
+/* Pied de liste : « Charger 24 actions de plus » */
+
+.lcse-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.75rem;
+}
+
+.lcse-more-info {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+}
+
 .lcse-card {
   background: #fff;
   border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);

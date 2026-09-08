@@ -243,6 +243,22 @@ body {
   .lcse-grid { grid-template-columns: 1fr; }
 }
 
+/* Pied de liste : « Charger 24 actions de plus » */
+
+.lcse-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.75rem;
+}
+
+.lcse-more-info {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+}
+
 .lcse-card {
   background: #fff;
   border: 1px solid var(--ft--color-border-neutral-default-weaker, #e6e7ec);
@@ -631,6 +647,13 @@ body {
 
   const FILTER_KEYS = ["region", "dept", "fede", "club"];
 
+  // Nombre d'actions affichées d'emblée, et taille de chaque lot ajouté
+  // ensuite par le bouton « Charger 24 actions de plus ». Toutes les
+  // actions restent chargées en mémoire : on ne limite que ce qui est
+  // effectivement rendu dans le DOM (et donc les logos à télécharger),
+  // ce qui est le poste de coût réel à l'affichage.
+  const PAGE_SIZE = 24;
+
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, (c) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -802,6 +825,29 @@ body {
       .filter((a) => a.pct < 100 && !HIDDEN_STATUTS.has(a.statut));
   }
 
+  /**
+   * Découpe la liste filtrée en une page cumulative : les `visibleCount`
+   * premières actions. Fonction pure, indépendante du DOM.
+   *
+   * @param {Array} list actions déjà filtrées, dans l'ordre d'affichage.
+   * @param {number} visibleCount nombre d'actions à afficher.
+   * @param {number} [pageSize=PAGE_SIZE] taille du prochain lot.
+   * @returns {{page:Array, shown:number, total:number, remaining:number, nextBatch:number}}
+   */
+  function paginate(list, visibleCount, pageSize) {
+    const size = Number(pageSize) > 0 ? Number(pageSize) : PAGE_SIZE;
+    const total = list.length;
+    const shown = Math.max(0, Math.min(Number(visibleCount) || 0, total));
+    const remaining = total - shown;
+    return {
+      page: list.slice(0, shown),
+      shown,
+      total,
+      remaining,
+      nextBatch: Math.min(size, remaining),
+    };
+  }
+
   // Options disponibles pour chaque filtre. Le département est limité à la
   // région choisie ; fédération et club restent globaux (comportement du
   // prototype d'origine, conservé tel quel).
@@ -819,6 +865,7 @@ body {
     ALL,
     TABLES,
     FILTER_KEYS,
+    PAGE_SIZE,
     escapeHtml,
     eur,
     formatDateFr,
@@ -829,6 +876,7 @@ body {
     indexById,
     photoUrlFor,
     buildActions,
+    paginate,
     getFilterOptions,
   };
 
@@ -881,7 +929,7 @@ body {
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
             <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
           </div>
-          ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
+          ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
         </div>
 
         <p class="lcse-card-club">${escapeHtml(a.clubLabel)}</p>
@@ -914,6 +962,25 @@ body {
         </div>
       </div>
     </article>`;
+  }
+
+  /**
+   * Pied de liste : rappel du nombre d'actions affichées et bouton
+   * d'ajout du lot suivant. Rien n'est rendu quand tout est déjà affiché.
+   *
+   * @param {{shown:number, total:number, remaining:number, nextBatch:number}} p
+   *   tel que renvoyé par logic.paginate.
+   */
+  function renderLoadMore(p) {
+    if (p.remaining <= 0) return "";
+    const actionsWord = p.nextBatch === 1 ? "action" : "actions";
+    return `
+    <div class="lcse-more">
+      <p class="lcse-more-info">${p.shown} actions affichées sur ${p.total}</p>
+      <button type="button" class="btn btn-secondary" data-action="load-more">
+        Charger ${p.nextBatch} ${actionsWord} de plus
+      </button>
+    </div>`;
   }
 
   // combo: { open: boolean, query: string } — état transitoire du champ de
@@ -1029,6 +1096,7 @@ body {
   return {
     renderEmptyState,
     renderCard,
+    renderLoadMore,
     renderCombo,
     comboOptionsHtml,
     renderModal,
@@ -1052,11 +1120,11 @@ body {
   "use strict";
 
   const {
-    ALL, TABLES, FILTER_KEYS,
-    getFilterOptions, filterOptionsByQuery, buildActions,
+    ALL, TABLES, FILTER_KEYS, PAGE_SIZE,
+    getFilterOptions, filterOptionsByQuery, buildActions, paginate,
   } = window.LCSE;
   const {
-    renderEmptyState, renderCard, renderCombo, comboOptionsHtml, renderModal,
+    renderEmptyState, renderCard, renderLoadMore, renderCombo, comboOptionsHtml, renderModal,
   } = window.LCSE;
 
   const state = {
@@ -1065,6 +1133,10 @@ body {
     fede: ALL,
     club: ALL,
     openActionId: null,
+    // Nombre d'actions rendues : on part d'un lot, puis le bouton
+    // « Charger 24 actions de plus » l'augmente. Remis à PAGE_SIZE dès
+    // que la liste filtrée change (choix de filtre, réinitialisation).
+    visibleCount: PAGE_SIZE,
     sent: false,
     submitting: false,
     submitError: "",
@@ -1148,6 +1220,7 @@ body {
     );
 
     const options = getFilterOptions(actions, state);
+    const pagination = paginate(list, state.visibleCount, PAGE_SIZE);
 
     const countLabel = list.length === 0
       ? "Aucune action ouverte au soutien"
@@ -1181,7 +1254,8 @@ body {
 
     <p class="lcse-count">${countLabel}</p>
 
-    ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${list.map(renderCard).join("")}</div>`}
+    ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
+    ${renderLoadMore(pagination)}
   `;
 
     modalRoot.innerHTML = renderModal(openAction, state);
@@ -1246,6 +1320,7 @@ body {
     app.querySelectorAll('[data-action="reset"]').forEach((el) => {
       el.addEventListener("click", () => {
         state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
+        state.visibleCount = PAGE_SIZE;
         FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
         render();
       });
@@ -1255,6 +1330,17 @@ body {
       el.addEventListener("click", () => {
         state.filtersOpen = !state.filtersOpen;
         render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="load-more"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.visibleCount += PAGE_SIZE;
+        // render() remplace tout le contenu de <main> : on remet le
+        // défilement où il était, sinon le clic renvoie en haut de page.
+        const y = window.scrollY;
+        render();
+        window.scrollTo(0, y);
       });
     });
 
@@ -1298,6 +1384,7 @@ body {
   function selectFilterValue(key, value) {
     state[key] = value;
     if (key === "region") state.dept = ALL;
+    state.visibleCount = PAGE_SIZE;
     combo[key].open = false;
     combo[key].query = "";
     render();

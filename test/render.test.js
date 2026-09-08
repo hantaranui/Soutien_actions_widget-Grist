@@ -103,3 +103,21 @@ describe("renderModal", () => {
     assert.match(html, /Envoi…/);
   });
 });
+
+describe("renderLoadMore", () => {
+  test("bouton et compteur quand il reste des actions à charger", () => {
+    const html = R.renderLoadMore({ shown: 24, total: 60, remaining: 36, nextBatch: 24 });
+    assert.match(html, /data-action="load-more"/);
+    assert.match(html, /Charger 24 actions de plus/);
+    assert.match(html, /24 actions affichées sur 60/);
+  });
+
+  test("rien du tout quand toutes les actions sont affichées", () => {
+    assert.equal(R.renderLoadMore({ shown: 12, total: 12, remaining: 0, nextBatch: 0 }), "");
+  });
+
+  test("dernier lot : annonce le nombre réel restant, au singulier si besoin", () => {
+    const html = R.renderLoadMore({ shown: 47, total: 48, remaining: 1, nextBatch: 1 });
+    assert.match(html, /Charger 1 action de plus/);
+  });
+});

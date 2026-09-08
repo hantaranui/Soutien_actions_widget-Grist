@@ -30,6 +30,13 @@
 
   const FILTER_KEYS = ["region", "dept", "fede", "club"];
 
+  // Nombre d'actions affichées d'emblée, et taille de chaque lot ajouté
+  // ensuite par le bouton « Charger 24 actions de plus ». Toutes les
+  // actions restent chargées en mémoire : on ne limite que ce qui est
+  // effectivement rendu dans le DOM (et donc les logos à télécharger),
+  // ce qui est le poste de coût réel à l'affichage.
+  const PAGE_SIZE = 24;
+
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, (c) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -201,6 +208,29 @@
       .filter((a) => a.pct < 100 && !HIDDEN_STATUTS.has(a.statut));
   }
 
+  /**
+   * Découpe la liste filtrée en une page cumulative : les `visibleCount`
+   * premières actions. Fonction pure, indépendante du DOM.
+   *
+   * @param {Array} list actions déjà filtrées, dans l'ordre d'affichage.
+   * @param {number} visibleCount nombre d'actions à afficher.
+   * @param {number} [pageSize=PAGE_SIZE] taille du prochain lot.
+   * @returns {{page:Array, shown:number, total:number, remaining:number, nextBatch:number}}
+   */
+  function paginate(list, visibleCount, pageSize) {
+    const size = Number(pageSize) > 0 ? Number(pageSize) : PAGE_SIZE;
+    const total = list.length;
+    const shown = Math.max(0, Math.min(Number(visibleCount) || 0, total));
+    const remaining = total - shown;
+    return {
+      page: list.slice(0, shown),
+      shown,
+      total,
+      remaining,
+      nextBatch: Math.min(size, remaining),
+    };
+  }
+
   // Options disponibles pour chaque filtre. Le département est limité à la
   // région choisie ; fédération et club restent globaux (comportement du
   // prototype d'origine, conservé tel quel).
@@ -218,6 +248,7 @@
     ALL,
     TABLES,
     FILTER_KEYS,
+    PAGE_SIZE,
     escapeHtml,
     eur,
     formatDateFr,
@@ -228,6 +259,7 @@
     indexById,
     photoUrlFor,
     buildActions,
+    paginate,
     getFilterOptions,
   };
 

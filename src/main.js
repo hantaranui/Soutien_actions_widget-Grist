@@ -11,11 +11,11 @@
   "use strict";
 
   const {
-    ALL, TABLES, FILTER_KEYS,
-    getFilterOptions, filterOptionsByQuery, buildActions,
+    ALL, TABLES, FILTER_KEYS, PAGE_SIZE,
+    getFilterOptions, filterOptionsByQuery, buildActions, paginate,
   } = window.LCSE;
   const {
-    renderEmptyState, renderCard, renderCombo, comboOptionsHtml, renderModal,
+    renderEmptyState, renderCard, renderLoadMore, renderCombo, comboOptionsHtml, renderModal,
   } = window.LCSE;
 
   const state = {
@@ -24,6 +24,10 @@
     fede: ALL,
     club: ALL,
     openActionId: null,
+    // Nombre d'actions rendues : on part d'un lot, puis le bouton
+    // « Charger 24 actions de plus » l'augmente. Remis à PAGE_SIZE dès
+    // que la liste filtrée change (choix de filtre, réinitialisation).
+    visibleCount: PAGE_SIZE,
     sent: false,
     submitting: false,
     submitError: "",
@@ -107,6 +111,7 @@
     );
 
     const options = getFilterOptions(actions, state);
+    const pagination = paginate(list, state.visibleCount, PAGE_SIZE);
 
     const countLabel = list.length === 0
       ? "Aucune action ouverte au soutien"
@@ -140,7 +145,8 @@
 
     <p class="lcse-count">${countLabel}</p>
 
-    ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${list.map(renderCard).join("")}</div>`}
+    ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
+    ${renderLoadMore(pagination)}
   `;
 
     modalRoot.innerHTML = renderModal(openAction, state);
@@ -205,6 +211,7 @@
     app.querySelectorAll('[data-action="reset"]').forEach((el) => {
       el.addEventListener("click", () => {
         state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
+        state.visibleCount = PAGE_SIZE;
         FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
         render();
       });
@@ -214,6 +221,17 @@
       el.addEventListener("click", () => {
         state.filtersOpen = !state.filtersOpen;
         render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="load-more"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.visibleCount += PAGE_SIZE;
+        // render() remplace tout le contenu de <main> : on remet le
+        // défilement où il était, sinon le clic renvoie en haut de page.
+        const y = window.scrollY;
+        render();
+        window.scrollTo(0, y);
       });
     });
 
@@ -257,6 +275,7 @@
   function selectFilterValue(key, value) {
     state[key] = value;
     if (key === "region") state.dept = ALL;
+    state.visibleCount = PAGE_SIZE;
     combo[key].open = false;
     combo[key].query = "";
     render();

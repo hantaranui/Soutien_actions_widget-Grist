@@ -280,3 +280,49 @@ describe("getFilterOptions", () => {
     assert.ok(opts.club.includes("PUC Rugby"), "club d'une autre région toujours listé");
   });
 });
+
+describe("paginate", () => {
+  const list = Array.from({ length: 60 }, (_, i) => ({ id: i + 1 }));
+
+  test("ne rend que le premier lot et annonce le reste", () => {
+    const p = LCSE.paginate(list, LCSE.PAGE_SIZE);
+    assert.equal(LCSE.PAGE_SIZE, 24);
+    assert.equal(p.page.length, 24);
+    assert.equal(p.page[0].id, 1);
+    assert.equal(p.shown, 24);
+    assert.equal(p.total, 60);
+    assert.equal(p.remaining, 36);
+    assert.equal(p.nextBatch, 24);
+  });
+
+  test("les lots sont cumulatifs : le second affichage garde les 24 premières", () => {
+    const p = LCSE.paginate(list, 48);
+    assert.equal(p.page.length, 48);
+    assert.equal(p.page[0].id, 1);
+    assert.equal(p.page[47].id, 48);
+    assert.equal(p.remaining, 12);
+    // Dernier lot incomplet : on n'annonce que ce qui reste.
+    assert.equal(p.nextBatch, 12);
+  });
+
+  test("liste plus courte qu'un lot : tout est affiché, plus rien à charger", () => {
+    const p = LCSE.paginate(list.slice(0, 10), LCSE.PAGE_SIZE);
+    assert.equal(p.page.length, 10);
+    assert.equal(p.remaining, 0);
+    assert.equal(p.nextBatch, 0);
+  });
+
+  test("un compteur au-delà du total ne déborde pas", () => {
+    const p = LCSE.paginate(list, 500);
+    assert.equal(p.page.length, 60);
+    assert.equal(p.shown, 60);
+    assert.equal(p.remaining, 0);
+  });
+
+  test("liste vide", () => {
+    const p = LCSE.paginate([], LCSE.PAGE_SIZE);
+    assert.deepEqual(p.page, []);
+    assert.equal(p.total, 0);
+    assert.equal(p.remaining, 0);
+  });
+});

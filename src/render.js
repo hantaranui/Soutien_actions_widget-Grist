@@ -38,7 +38,7 @@
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
             <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
           </div>
-          ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
+          ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
         </div>
 
         <p class="lcse-card-club">${escapeHtml(a.clubLabel)}</p>
@@ -71,6 +71,25 @@
         </div>
       </div>
     </article>`;
+  }
+
+  /**
+   * Pied de liste : rappel du nombre d'actions affichées et bouton
+   * d'ajout du lot suivant. Rien n'est rendu quand tout est déjà affiché.
+   *
+   * @param {{shown:number, total:number, remaining:number, nextBatch:number}} p
+   *   tel que renvoyé par logic.paginate.
+   */
+  function renderLoadMore(p) {
+    if (p.remaining <= 0) return "";
+    const actionsWord = p.nextBatch === 1 ? "action" : "actions";
+    return `
+    <div class="lcse-more">
+      <p class="lcse-more-info">${p.shown} actions affichées sur ${p.total}</p>
+      <button type="button" class="btn btn-secondary" data-action="load-more">
+        Charger ${p.nextBatch} ${actionsWord} de plus
+      </button>
+    </div>`;
   }
 
   // combo: { open: boolean, query: string } — état transitoire du champ de
@@ -186,6 +205,7 @@
   return {
     renderEmptyState,
     renderCard,
+    renderLoadMore,
     renderCombo,
     comboOptionsHtml,
     renderModal,
