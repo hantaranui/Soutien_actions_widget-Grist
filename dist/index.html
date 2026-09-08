@@ -410,10 +410,13 @@ body {
    flex-basis (une media query n'ajoute pas de spécificité, c'est l'ordre
    qui tranche — l'empilement de la jauge ne fonctionnait pas). */
 @media (max-width: 420px) {
-  /* En dessous de cette largeur, la jauge et le bouton s'empilent plutôt
-     que de se serrer côte à côte. */
+  /* En dessous de cette largeur, la jauge prend toute la ligne et le
+     bouton passe en dessous. Il garde sa largeur naturelle : l'étirer à
+     100% (ce que faisait cette règle) donnait un bouton pleine largeur
+     qui écrasait tous les réglages de taille ci-dessus. margin-left:auto
+     le pousse à droite, comme dans la disposition large. */
   .lcse-card-progress { flex-basis: 100%; }
-  .lcse-card-footer .btn { flex-basis: 100%; }
+  .lcse-card-footer .btn { margin-left: auto; }
 }
 
 .lcse-card-progress .progress-label {
@@ -424,7 +427,9 @@ body {
   font-weight: 600;
 }
 
-.lcse-card-progress .progress { width: 100%; height: 0.5rem; }
+/* 10px : un cran au-dessus des 8px du design de référence, la barre se
+   lit mieux sans devenir un bandeau. */
+.lcse-card-progress .progress { width: 100%; height: 0.625rem; }
 .lcse-card-progress .progress-bar { background-color: var(--ft--color-primary, #283276); height: 100%; }
 
 /* Modale de soutien */
