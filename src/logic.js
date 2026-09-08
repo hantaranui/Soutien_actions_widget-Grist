@@ -148,6 +148,36 @@
     return approx || "Date à préciser";
   }
 
+  // Horodatage brut d'une action, ou null s'il n'y en a pas d'exploitable.
+  // Grist renvoie null, false ou "" pour une date vide selon les cas.
+  function dateTsOf(a) {
+    const ts = a.Date;
+    if (ts === null || ts === undefined || ts === false || ts === "") return null;
+    const n = Number(ts);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /**
+   * Tri chronologique croissant, sur l'horodatage brut et non sur
+   * `dateLabel` : celui-ci est du texte ("Courant novembre 2026", "Date à
+   * préciser") et se trierait alphabétiquement.
+   *
+   * Les actions sans date connue ne peuvent pas être placées dans la
+   * chronologie : elles sont regroupées à la fin. À date égale — ou entre
+   * deux actions sans date — l'id tranche, pour que l'ordre affiché soit
+   * toujours le même d'un chargement à l'autre.
+   *
+   * Ne modifie pas le tableau reçu.
+   */
+  function sortByDateAsc(actions) {
+    return actions.slice().sort((x, y) => {
+      if (x.dateTs === null && y.dateTs === null) return x.id - y.id;
+      if (x.dateTs === null) return 1;
+      if (y.dateTs === null) return -1;
+      return (x.dateTs - y.dateTs) || (x.id - y.id);
+    });
+  }
+
   /**
    * Assemble les tables brutes (au format colonnes de grist.docApi.fetchTable)
    * en une liste d'actions prêtes à l'affichage : résolution des références
@@ -184,7 +214,9 @@
 
     const rawActions = rowsFromColumnTable(actionsT);
 
-    return rawActions
+    // sortByDateAsc en sortie : l'ordre chronologique vaut pour les deux
+    // onglets et pour la pagination, qui découpe cette liste telle quelle.
+    return sortByDateAsc(rawActions
       .map((a) => {
         const dr = a.DR ? drMap.get(a.DR) : null;
         const dd = a.DD ? ddMap.get(a.DD) : null;
@@ -202,6 +234,7 @@
           financee: pct >= 100,
           statut: a.Statut || "",
           dateLabel: dateLabelFor(a),
+          dateTs: dateTsOf(a),
           clubLabel: structure ? structure.Nom : "Club non renseigné",
           villeLabel: agence ? agence.Libelle_agence : "Non précisée",
           federationLabel: federation ? federation.Nom : "Non précisée",
@@ -218,7 +251,7 @@
       })
       // Une action Réalisée ou Annulée n'a plus rien à faire dans le widget,
       // quel que soit son financement.
-      .filter((a) => !HIDDEN_STATUTS.has(a.statut));
+      .filter((a) => !HIDDEN_STATUTS.has(a.statut)));
   }
 
   /**
@@ -293,6 +326,7 @@
     indexById,
     photoUrlFor,
     buildActions,
+    sortByDateAsc,
     actionsForTab,
     countLabelFor,
     paginate,

@@ -154,7 +154,9 @@ describe("buildActions", () => {
         Budget: [2000, 1500, 1000],
         Jauge: [42, 0, null],
         Public: [["L", "BRSA", "Jeunes"], ["L"], null],
-        Date: [1789516800, null, null],
+        // Dates en désordre décroissant dans la table : l'action 1 est la
+        // plus tardive, la 2 la plus proche, la 3 n'a pas de date.
+        Date: [1789516800, 1789084800, null],
         Statut: ["Planifiée", "Planifiée", "A confirmer"],
         Periode_approx: ["", "", ""],
       },
@@ -201,6 +203,15 @@ describe("buildActions", () => {
   test("une action partiellement financée n'est pas marquée `financee`", () => {
     const actions = LCSE.buildActions(fixtureTables(), null);
     assert.equal(actions.find((a) => a.id === 1).financee, false);
+  });
+
+  test("renvoie les actions triées par date croissante, sans date à la fin", () => {
+    const actions = LCSE.buildActions(fixtureTables(), null);
+    // Table dans l'ordre 1, 2, 3 ; dates : 1 = 16/09, 2 = 11/09, 3 = aucune.
+    assert.deepEqual(actions.map((a) => a.id), [2, 1, 3]);
+    assert.equal(actions[0].dateLabel, "11 septembre 2026");
+    assert.equal(actions[1].dateLabel, "16 septembre 2026");
+    assert.equal(actions[2].dateTs, null);
   });
 
   test("retombe sur des libellés de repli quand les références sont vides", () => {
@@ -390,5 +401,49 @@ describe("TABS", () => {
     assert.equal(LCSE.TABS[0].label, "Actions à soutenir");
     assert.equal(LCSE.TABS[1].key, LCSE.TAB_FUNDED);
     assert.equal(LCSE.TABS[1].label, "Actions déjà financées");
+  });
+});
+
+describe("sortByDateAsc", () => {
+  const JAN = 1767225600;  // 1er janvier 2026
+  const FEB = 1769904000;  // 1er février 2026
+  const MAR = 1772323200;  // 1er mars 2026
+
+  test("ordonne du plus proche au plus lointain", () => {
+    const list = LCSE.sortByDateAsc([
+      { id: 1, dateTs: MAR },
+      { id: 2, dateTs: JAN },
+      { id: 3, dateTs: FEB },
+    ]);
+    assert.deepEqual(list.map((a) => a.id), [2, 3, 1]);
+  });
+
+  test("les actions sans date connue vont à la fin", () => {
+    const list = LCSE.sortByDateAsc([
+      { id: 1, dateTs: null },
+      { id: 2, dateTs: FEB },
+      { id: 3, dateTs: null },
+      { id: 4, dateTs: JAN },
+    ]);
+    assert.deepEqual(list.map((a) => a.id), [4, 2, 1, 3]);
+  });
+
+  test("à date égale, l'ordre reste déterministe (par id)", () => {
+    const list = LCSE.sortByDateAsc([
+      { id: 9, dateTs: JAN },
+      { id: 4, dateTs: JAN },
+      { id: 7, dateTs: JAN },
+    ]);
+    assert.deepEqual(list.map((a) => a.id), [4, 7, 9]);
+  });
+
+  test("ne modifie pas le tableau reçu", () => {
+    const input = [{ id: 1, dateTs: MAR }, { id: 2, dateTs: JAN }];
+    LCSE.sortByDateAsc(input);
+    assert.deepEqual(input.map((a) => a.id), [1, 2], "l'entrée doit être intacte");
+  });
+
+  test("liste vide", () => {
+    assert.deepEqual(LCSE.sortByDateAsc([]), []);
   });
 });
