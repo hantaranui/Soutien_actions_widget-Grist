@@ -368,11 +368,32 @@ body {
   margin-bottom: 1.25rem;
 }
 
+/* Le bouton garde sa largeur naturelle (flex-grow:0) : il ne s'étire plus
+   pour égaler la jauge, qui récupère toute la place restante. Le
+   remplissage horizontal est resserré à la valeur des boutons compacts du
+   Design System (--ft--button-sm-padding-x) au lieu de celle des boutons
+   normaux (1rem), pour ne pas laisser de vide de part et d'autre de
+   « Soutenir » — la hauteur, elle, reste celle d'un bouton normal
+   (2,5rem), suffisante au doigt. */
 .lcse-card-footer .btn {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  padding: 0 0.75rem;
+  /* 14px, comme le bouton du design de référence (Page de soutien.dc.html) :
+     le Design System met 16px par défaut, ce qui élargissait le bouton
+     d'une vingtaine de pixels sans rien apporter. */
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 
+/* flex-basis à 0 (et non auto) : la largeur naturelle du libellé de la
+   jauge n'entre pas dans le calcul du retour à la ligne, donc le bouton
+   reste à côté de la jauge au lieu de passer sous elle sur les cartes
+   étroites (grille à trois colonnes). La jauge prend tout le reste. */
+.lcse-card-progress { flex: 1 1 0; min-width: 0; }
+
+/* Après les règles de base, sinon `flex: 1 1 0` ci-dessus écraserait ce
+   flex-basis (une media query n'ajoute pas de spécificité, c'est l'ordre
+   qui tranche — l'empilement de la jauge ne fonctionnait pas). */
 @media (max-width: 420px) {
   /* En dessous de cette largeur, la jauge et le bouton s'empilent plutôt
      que de se serrer côte à côte. */
@@ -380,11 +401,11 @@ body {
   .lcse-card-footer .btn { flex-basis: 100%; }
 }
 
-.lcse-card-progress { flex: 1; min-width: 0; }
-
 .lcse-card-progress .progress-label {
   margin-bottom: 0.375rem;
-  font-size: 0.8125rem;
+  /* 14px comme la référence (et non 13px) : c'est le montant cofinancé,
+     l'information que la carte doit mettre en avant. */
+  font-size: 0.875rem;
   font-weight: 600;
 }
 

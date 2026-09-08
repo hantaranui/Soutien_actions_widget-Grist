@@ -67,7 +67,10 @@
             <p class="progress-label"><span>${escapeHtml(a.collecteLabel)}</span></p>
             <div class="progress"><div class="progress-bar" style="width:${a.pct}%"></div></div>
           </div>
-          <button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}">Soutenir cette action</button>
+          <!-- Libellé court pour laisser la place à la jauge ; aria-label
+               redonne le contexte aux lecteurs d'écran, qui annoncent
+               souvent les boutons hors de leur carte. -->
+          <button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}">Soutenir</button>
         </div>
       </div>
     </article>`;

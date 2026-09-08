@@ -28,6 +28,13 @@ describe("renderCard", () => {
     assert.match(html, /width:40%/);
   });
 
+  test("bouton au libellé court, contexte conservé via aria-label", () => {
+    const html = R.renderCard(SAMPLE_ACTION);
+    assert.match(html, />Soutenir</, "libellé court, pour laisser la place à la jauge");
+    assert.ok(!html.includes(">Soutenir cette action<"));
+    assert.match(html, /aria-label="Soutenir cette action : Du stade vers l&#39;emploi"/);
+  });
+
   test("échappe le HTML injecté dans les champs texte (anti-XSS)", () => {
     const html = R.renderCard({ ...SAMPLE_ACTION, intitule: '<img src=x onerror=alert(1)>' });
     assert.ok(!html.includes("<img src=x"));
