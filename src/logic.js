@@ -120,20 +120,38 @@
    *  1. la colonne texte `Logo_url` de Structures — une simple adresse
    *     d'image, qui ne dépend d'aucun jeton ni permission et fonctionne
    *     donc sur n'importe quelle instance Grist ;
-   *  2. à défaut, la pièce jointe `Logo`, qui exige un jeton d'accès
-   *     (grist.docApi.getAccessToken) — indisponible sur certaines
-   *     instances, auquel cas attachToken vaut null et on renvoie null.
+   *  2. à défaut, la pièce jointe `Logo`.
+   *
+   * Le téléchargement d'une pièce jointe est une requête HTTP autonome :
+   * contrairement aux tables, elle ne passe pas par l'API plugin et ne
+   * bénéficie donc pas du contexte de la page Grist. Il faut l'autoriser
+   * explicitement, de deux façons, dans cet ordre :
+   *  - `linkKey` : la clé de lien que les règles d'accès du document
+   *    exigent d'un visiteur anonyme (`user.LinkKey.pp`). C'est le cas de
+   *    la page publique, où le paramètre `pp_` figure dans l'URL — sans
+   *    lui le téléchargement répond 403 alors même que les tables se
+   *    lisent, et la page perd tous ses logos ;
+   *  - `token` : un jeton `grist.docApi.getAccessToken`, pour un visiteur
+   *    authentifié. Indisponible pour un anonyme, d'où le repli ci-dessus.
+   *
+   * @param {{baseUrl:string, linkKey?:string, token?:string}|null} attachAccess
    */
-  function photoUrlFor(structure, attachToken) {
+  function photoUrlFor(structure, attachAccess) {
     if (!structure) return null;
 
     const url = structure.Logo_url;
     if (isSafeImageUrl(url)) return String(url).trim();
 
-    if (!attachToken) return null;
+    if (!attachAccess || !attachAccess.baseUrl) return null;
     const ids = unpackList(structure.Logo);
     if (!ids.length) return null;
-    return `${attachToken.baseUrl}/attachments/${ids[0]}/download?auth=${attachToken.token}`;
+
+    const auth = attachAccess.linkKey
+      ? `pp_=${encodeURIComponent(attachAccess.linkKey)}`
+      : (attachAccess.token ? `auth=${encodeURIComponent(attachAccess.token)}` : null);
+    if (!auth) return null;
+
+    return `${attachAccess.baseUrl}/attachments/${ids[0]}/download?${auth}`;
   }
 
   // Statuts qui retirent une action du widget, quel que soit son financement.
@@ -192,11 +210,12 @@
    *
    * @param {object} tables { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT }
    *   — chacune au format renvoyé par grist.docApi.fetchTable.
-   * @param {{baseUrl:string, token:string}|null} attachToken pour construire
-   *   les URLs de téléchargement des logos (Structures.Logo), ou null si
-   *   indisponible (les logos retombent alors sur le placeholder).
+   * @param {{baseUrl:string, linkKey?:string, token?:string}|null} attachAccess
+   *   de quoi construire les URLs de téléchargement des logos
+   *   (Structures.Logo), ou null si indisponible (les logos retombent
+   *   alors sur le placeholder). Voir photoUrlFor.
    */
-  function buildActions(tables, attachToken) {
+  function buildActions(tables, attachAccess) {
     const { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT } = tables;
 
     const drMap = indexById(rowsFromColumnTable(drT));
@@ -242,7 +261,7 @@
           deptLabel: dd ? dd.Nom : "",
           participantsLabel: (a.Jauge || a.Jauge === 0) ? (Number(a.Jauge).toLocaleString("fr-FR") + " participants") : "Non précisé",
           publicLabel: publicLabels.length ? publicLabels.join(", ") : "Non précisé",
-          photoUrl: photoUrlFor(structure, attachToken),
+          photoUrl: photoUrlFor(structure, attachAccess),
           budget,
           collecte,
           pct,

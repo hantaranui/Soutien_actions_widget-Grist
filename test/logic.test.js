@@ -134,6 +134,37 @@ describe("photoUrlFor", () => {
     assert.equal(LCSE.photoUrlFor({ Logo_url: "data:image/png;base64,AAAA" }, null), null);
     assert.equal(LCSE.photoUrlFor({ Logo_url: "pas une adresse" }, null), null);
   });
+
+  // Sur la page publique le visiteur est anonyme : getAccessToken n'aboutit
+  // pas, et seule la clé de lien de l'URL autorise le téléchargement.
+  test("la clé de lien autorise le téléchargement sans jeton", () => {
+    const access = { baseUrl: "https://grist.aucarre.tech/api/docs/DOC", linkKey: "lcse-soutien" };
+    assert.equal(
+      LCSE.photoUrlFor({ Logo: ["L", 42] }, access),
+      "https://grist.aucarre.tech/api/docs/DOC/attachments/42/download?pp_=lcse-soutien"
+    );
+  });
+
+  test("la clé de lien passe devant le jeton quand les deux sont là", () => {
+    const access = { baseUrl: "https://g/api/docs/DOC", linkKey: "k", token: "abc123" };
+    assert.equal(
+      LCSE.photoUrlFor({ Logo: ["L", 7] }, access),
+      "https://g/api/docs/DOC/attachments/7/download?pp_=k"
+    );
+  });
+
+  test("la clé est encodée (elle vient de la configuration, pas de la donnée)", () => {
+    const access = { baseUrl: "https://g/api/docs/DOC", linkKey: "a b&c" };
+    assert.equal(
+      LCSE.photoUrlFor({ Logo: ["L", 1] }, access),
+      "https://g/api/docs/DOC/attachments/1/download?pp_=a%20b%26c"
+    );
+  });
+
+  test("sans baseUrl, ou sans clé ni jeton, on retombe sur le placeholder", () => {
+    assert.equal(LCSE.photoUrlFor({ Logo: ["L", 42] }, { linkKey: "k" }), null);
+    assert.equal(LCSE.photoUrlFor({ Logo: ["L", 42] }, { baseUrl: "https://g/api/docs/DOC" }), null);
+  });
 });
 
 describe("buildActions", () => {

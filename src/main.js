@@ -20,6 +20,25 @@
     comboOptionsHtml, renderModal,
   } = window.LCSE;
 
+  // --- Accès aux pièces jointes (logos) ---------------------------------
+  //
+  // Les tables arrivent par l'API plugin, dans le contexte de la page
+  // Grist : les règles d'accès y voient la clé de lien de l'URL et
+  // laissent passer. Le logo, lui, est téléchargé par une requête HTTP
+  // séparée depuis l'iframe du widget, qui ne connaît pas l'URL de la
+  // page parente (origines différentes) — il faut donc lui redonner la
+  // clé, sans quoi Grist répond 403 et la page publique perd ses logos.
+  //
+  // Cette clé n'est pas un secret : elle figure en clair dans l'URL
+  // publique distribuée aux visiteurs (`?pp_=lcse-soutien`). Ce sont les
+  // règles d'accès du document qui décident ce qu'elle ouvre.
+  const PUBLIC_LINK_KEY = "lcse-soutien";
+  // Repli quand getAccessToken n'aboutit pas (cas du visiteur anonyme) :
+  // il faut bien une base d'URL. À faire évoluer en même temps que le
+  // document servi par la page publique.
+  const ATTACHMENTS_BASE_URL =
+    "https://grist.aucarre.tech/o/docs/api/docs/79GCxUFdb7Py";
+
   const state = {
     // Onglet d'arrivée : les actions encore à financer, but du widget.
     tab: TAB_OPEN,
@@ -79,7 +98,14 @@
 
     actions = buildActions(
       { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT },
-      attachToken
+      {
+        // Le jeton, quand il existe, fournit surtout la bonne base d'URL
+        // (elle porte l'identifiant du document) ; c'est la clé de lien
+        // qui autorise réellement le téléchargement.
+        baseUrl: (attachToken && attachToken.baseUrl) || ATTACHMENTS_BASE_URL,
+        linkKey: PUBLIC_LINK_KEY,
+        token: attachToken ? attachToken.token : null,
+      }
     );
 
     loaded = true;
