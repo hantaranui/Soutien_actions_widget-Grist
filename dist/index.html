@@ -843,6 +843,22 @@ body {
   // Statuts qui retirent une action du widget, quel que soit son financement.
   const HIDDEN_STATUTS = new Set(["Réalisée", "Annulée"]);
 
+  /**
+   * Lecture de la colonne Actions.Ouvert_au_financement, qui décide si une
+   * action est proposée au soutien. C'est aujourd'hui une case à cocher
+   * (Bool) : Grist renvoie alors true/false, et null pour une ligne jamais
+   * touchée. On accepte aussi le texte "Oui" et le nombre 1 au cas où la
+   * colonne redeviendrait un Choice — le widget continuerait de filtrer
+   * correctement sans modification.
+   *
+   * Tout le reste (case décochée, vide, "Non") vaut "pas ouvert" : une
+   * action n'est proposée que sur décision explicite, jamais par défaut.
+   */
+  function isOuvertAuFinancement(value) {
+    if (value === true || value === 1) return true;
+    return String(value ?? "").trim().toLocaleLowerCase("fr-FR") === "oui";
+  }
+
   // La date affichée dépend du statut : une date exacte n'a de sens que
   // pour une action "Planifiée" ; tant que c'est "A confirmer" (ou tout
   // autre statut), on affiche la période approximative en texte libre.
@@ -889,6 +905,9 @@ body {
    * partir de Cofinancements, et labels formatés en français.
    *
    * Seul le statut retire une action du résultat : "Réalisée" ou "Annulée".
+   * La case "Ouvert au financement" ne filtre pas ici mais est reportée sur
+   * chaque action (`ouvertAuFinancement`) : c'est actionsForTab qui s'en
+   * sert, l'onglet des actions déjà financées n'ayant pas à l'appliquer.
    * Les actions financées à 100 % sont conservées et marquées `financee`,
    * pour alimenter l'onglet "Actions déjà financées" — elles étaient
    * auparavant écartées d'office, avant que le client demande de les
@@ -937,6 +956,7 @@ body {
           id: a.id,
           intitule: a.Intitule || "(sans titre)",
           financee: pct >= 100,
+          ouvertAuFinancement: isOuvertAuFinancement(a.Ouvert_au_financement),
           statut: a.Statut || "",
           dateLabel: dateLabelFor(a),
           dateTs: dateTsOf(a),
@@ -982,11 +1002,22 @@ body {
     };
   }
 
-  // Répartit les actions selon l'onglet : financées à 100 % d'un côté,
-  // toutes les autres de l'autre. Aucune action n'apparaît dans les deux.
+  /**
+   * Répartit les actions selon l'onglet : financées à 100 % d'un côté,
+   * ouvertes au soutien de l'autre. Aucune action n'apparaît dans les deux.
+   *
+   * L'onglet "à soutenir" exige en plus la case Ouvert_au_financement :
+   * une action non financée mais non ouverte n'est proposée nulle part —
+   * elle existe dans le document sans être publiée aux visiteurs. Les
+   * deux onglets ne couvrent donc plus toute la liste.
+   *
+   * L'onglet des financées n'applique pas cette condition : une action
+   * arrivée à 100 % a bien été ouverte au soutien à un moment, et doit
+   * rester visible même si la case a été décochée depuis.
+   */
   function actionsForTab(actions, tab) {
-    const wantFunded = tab === TAB_FUNDED;
-    return actions.filter((a) => !!a.financee === wantFunded);
+    if (tab === TAB_FUNDED) return actions.filter((a) => !!a.financee);
+    return actions.filter((a) => !a.financee && !!a.ouvertAuFinancement);
   }
 
   // Le compteur au-dessus de la liste : la formulation dépend de l'onglet,
@@ -1030,6 +1061,7 @@ body {
     rowsFromColumnTable,
     indexById,
     photoUrlFor,
+    isOuvertAuFinancement,
     buildActions,
     sortByDateAsc,
     actionsForTab,

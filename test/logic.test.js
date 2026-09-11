@@ -190,6 +190,8 @@ describe("buildActions", () => {
         Date: [1789516800, 1789084800, null],
         Statut: ["Planifiée", "Planifiée", "A confirmer"],
         Periode_approx: ["", "", ""],
+        // Case à cocher : seules 1 et 3 sont proposées au soutien.
+        Ouvert_au_financement: [true, false, true],
       },
       drT: { id: [40], Nom: ["Nouvelle-Aquitaine"] },
       ddT: { id: [50], Nom: ["DD Corrèze"] },
@@ -229,6 +231,12 @@ describe("buildActions", () => {
     assert.ok(a2, "l'action financée à 100% doit être présente");
     assert.equal(a2.pct, 100);
     assert.equal(a2.financee, true);
+  });
+
+  test("reporte la case Ouvert au financement sur chaque action", () => {
+    const actions = LCSE.buildActions(fixtureTables(), null);
+    assert.equal(actions.find((a) => a.id === 1).ouvertAuFinancement, true);
+    assert.equal(actions.find((a) => a.id === 2).ouvertAuFinancement, false);
   });
 
   test("une action partiellement financée n'est pas marquée `financee`", () => {
@@ -381,33 +389,64 @@ describe("paginate", () => {
 
 describe("actionsForTab", () => {
   const actions = [
-    { id: 1, financee: false },
-    { id: 2, financee: true },
-    { id: 3, financee: false },
-    { id: 4, financee: true },
+    { id: 1, financee: false, ouvertAuFinancement: true },
+    { id: 2, financee: true, ouvertAuFinancement: true },
+    { id: 3, financee: false, ouvertAuFinancement: true },
+    { id: 4, financee: true, ouvertAuFinancement: false },
+    { id: 5, financee: false, ouvertAuFinancement: false },
   ];
 
-  test("l'onglet à soutenir ne garde que les actions non financées", () => {
+  test("l'onglet à soutenir ne garde que les actions non financées ET ouvertes", () => {
     const list = LCSE.actionsForTab(actions, LCSE.TAB_OPEN);
     assert.deepEqual(list.map((a) => a.id), [1, 3]);
   });
 
-  test("l'onglet des financées ne garde que celles à 100%", () => {
+  test("l'onglet des financées ne garde que celles à 100%, case cochée ou non", () => {
+    // L'action 4 est financée mais sa case a été décochée depuis : elle
+    // reste visible, le soutien ayant bien eu lieu.
     const list = LCSE.actionsForTab(actions, LCSE.TAB_FUNDED);
     assert.deepEqual(list.map((a) => a.id), [2, 4]);
   });
 
-  test("les deux onglets sont complémentaires : aucune action perdue ni en double", () => {
-    const a = LCSE.actionsForTab(actions, LCSE.TAB_OPEN).length;
-    const b = LCSE.actionsForTab(actions, LCSE.TAB_FUNDED).length;
-    assert.equal(a + b, actions.length);
+  test("une action ni financée ni ouverte n'apparaît dans aucun onglet", () => {
+    const open = LCSE.actionsForTab(actions, LCSE.TAB_OPEN).map((a) => a.id);
+    const funded = LCSE.actionsForTab(actions, LCSE.TAB_FUNDED).map((a) => a.id);
+    assert.ok(!open.includes(5) && !funded.includes(5));
   });
 
-  test("une action sans champ financee compte comme à soutenir", () => {
-    // Robustesse : `financee` absent (undefined) ne doit pas faire
-    // disparaître l'action des deux onglets.
+  test("aucune action n'apparaît dans les deux onglets à la fois", () => {
+    const open = LCSE.actionsForTab(actions, LCSE.TAB_OPEN).map((a) => a.id);
+    const funded = LCSE.actionsForTab(actions, LCSE.TAB_FUNDED).map((a) => a.id);
+    assert.equal(open.filter((id) => funded.includes(id)).length, 0);
+  });
+
+  test("une action sans case cochée n'est pas proposée au soutien", () => {
+    // Le champ absent (undefined) vaut "pas ouvert" : rien n'est publié
+    // par défaut, c'est la décision explicite qui ouvre au soutien.
     const list = LCSE.actionsForTab([{ id: 9 }], LCSE.TAB_OPEN);
-    assert.deepEqual(list.map((a) => a.id), [9]);
+    assert.deepEqual(list.map((a) => a.id), []);
+  });
+});
+
+describe("isOuvertAuFinancement", () => {
+  test("la case cochée ouvre au financement", () => {
+    assert.equal(LCSE.isOuvertAuFinancement(true), true);
+    assert.equal(LCSE.isOuvertAuFinancement(1), true);
+  });
+
+  test("le texte \"Oui\" est accepté (au cas où la colonne redeviendrait un Choice)", () => {
+    assert.equal(LCSE.isOuvertAuFinancement("Oui"), true);
+    assert.equal(LCSE.isOuvertAuFinancement("oui"), true);
+    assert.equal(LCSE.isOuvertAuFinancement(" OUI "), true);
+  });
+
+  test("tout le reste vaut \"pas ouvert\"", () => {
+    assert.equal(LCSE.isOuvertAuFinancement(false), false);
+    assert.equal(LCSE.isOuvertAuFinancement(null), false);
+    assert.equal(LCSE.isOuvertAuFinancement(undefined), false);
+    assert.equal(LCSE.isOuvertAuFinancement(""), false);
+    assert.equal(LCSE.isOuvertAuFinancement("Non"), false);
+    assert.equal(LCSE.isOuvertAuFinancement(0), false);
   });
 });
 
