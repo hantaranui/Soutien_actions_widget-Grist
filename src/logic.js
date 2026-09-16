@@ -21,7 +21,6 @@
     actions: "Actions",
     dr: "DR",
     dd: "DD",
-    agences: "Agences",
     structures: "Structures",
     federations: "Federations",
     cofinancements: "Cofinancements",
@@ -173,6 +172,14 @@
     return String(value ?? "").trim().toLocaleLowerCase("fr-FR") === "oui";
   }
 
+  // La ville est une saisie libre portée par l'action (colonne texte
+  // Actions.Ville) : ni le club ni l'agence France Travail ne la
+  // déterminent. Elle peut donc être vide, d'où le repli.
+  function villeLabelFor(a) {
+    const ville = a.Ville && String(a.Ville).trim();
+    return ville || "Non précisée";
+  }
+
   // La date affichée dépend du statut : une date exacte n'a de sens que
   // pour une action "Planifiée" ; tant que c'est "A confirmer" (ou tout
   // autre statut), on affiche la période approximative en texte libre.
@@ -215,7 +222,7 @@
   /**
    * Assemble les tables brutes (au format colonnes de grist.docApi.fetchTable)
    * en une liste d'actions prêtes à l'affichage : résolution des références
-   * (Club, Agence, Fédération, DR, DD), calcul de la jauge de financement à
+   * (Club, Fédération, DR, DD), calcul de la jauge de financement à
    * partir de Cofinancements, et labels formatés en français.
    *
    * Seul le statut retire une action du résultat : "Réalisée" ou "Annulée".
@@ -227,7 +234,7 @@
    * auparavant écartées d'office, avant que le client demande de les
    * montrer à part plutôt que de les masquer.
    *
-   * @param {object} tables { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT }
+   * @param {object} tables { actionsT, drT, ddT, structuresT, federationsT, cofinT }
    *   — chacune au format renvoyé par grist.docApi.fetchTable.
    * @param {{baseUrl:string, linkKey?:string, token?:string}|null} attachAccess
    *   de quoi construire les URLs de téléchargement des logos
@@ -235,11 +242,10 @@
    *   alors sur le placeholder). Voir photoUrlFor.
    */
   function buildActions(tables, attachAccess) {
-    const { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT } = tables;
+    const { actionsT, drT, ddT, structuresT, federationsT, cofinT } = tables;
 
     const drMap = indexById(rowsFromColumnTable(drT));
     const ddMap = indexById(rowsFromColumnTable(ddT));
-    const agenceMap = indexById(rowsFromColumnTable(agencesT));
     const structureMap = indexById(rowsFromColumnTable(structuresT));
     const federationMap = indexById(rowsFromColumnTable(federationsT));
     const cofinRows = rowsFromColumnTable(cofinT);
@@ -258,7 +264,6 @@
       .map((a) => {
         const dr = a.DR ? drMap.get(a.DR) : null;
         const dd = a.DD ? ddMap.get(a.DD) : null;
-        const agence = a.Agence ? agenceMap.get(a.Agence) : null;
         const structure = a.Club ? structureMap.get(a.Club) : null;
         const federation = a.Federation ? federationMap.get(a.Federation) : null;
         const budget = Number(a.Budget) || 0;
@@ -275,7 +280,7 @@
           dateLabel: dateLabelFor(a),
           dateTs: dateTsOf(a),
           clubLabel: structure ? structure.Nom : "Club non renseigné",
-          villeLabel: agence ? agence.Libelle_agence : "Non précisée",
+          villeLabel: villeLabelFor(a),
           federationLabel: federation ? federation.Nom : "Non précisée",
           regionLabel: dr ? dr.Nom : "",
           deptLabel: dd ? dd.Nom : "",

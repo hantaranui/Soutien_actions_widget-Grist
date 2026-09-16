@@ -178,7 +178,8 @@ describe("buildActions", () => {
         id: [1, 2, 3],
         Intitule: ["Du stade vers l'emploi", "Match des métiers", ""],
         Club: [10, 10, 0],
-        Agence: [20, 20, 0],
+        // Saisie libre portée par l'action, vide sur la 3.
+        Ville: ["Brive-la-Gaillarde", "Tulle", ""],
         Federation: [30, 30, 0],
         DR: [40, 40, 0],
         DD: [50, 50, 0],
@@ -195,7 +196,6 @@ describe("buildActions", () => {
       },
       drT: { id: [40], Nom: ["Nouvelle-Aquitaine"] },
       ddT: { id: [50], Nom: ["DD Corrèze"] },
-      agencesT: { id: [20], Libelle_agence: ["BRIVE LA MARQUISIE"] },
       structuresT: { id: [10], Nom: ["CA BRIVE"], Logo: [["L", 99]] },
       federationsT: { id: [30], Nom: ["Fédération française Rugby"] },
       cofinT: {
@@ -211,7 +211,7 @@ describe("buildActions", () => {
     const a1 = actions.find((a) => a.id === 1);
     assert.ok(a1, "l'action 1 (financée à 25%) doit être présente");
     assert.equal(a1.clubLabel, "CA BRIVE");
-    assert.equal(a1.villeLabel, "BRIVE LA MARQUISIE");
+    assert.equal(a1.villeLabel, "Brive-la-Gaillarde");
     assert.equal(a1.federationLabel, "Fédération française Rugby");
     assert.equal(a1.regionLabel, "Nouvelle-Aquitaine");
     assert.equal(a1.deptLabel, "DD Corrèze");
@@ -259,6 +259,8 @@ describe("buildActions", () => {
     assert.ok(a3);
     assert.equal(a3.intitule, "(sans titre)");
     assert.equal(a3.clubLabel, "Club non renseigné");
+    // Ville n'est pas une référence mais une saisie libre : c'est la
+    // colonne Actions.Ville laissée vide qui déclenche ce repli.
     assert.equal(a3.villeLabel, "Non précisée");
     assert.equal(a3.federationLabel, "Non précisée");
     assert.equal(a3.participantsLabel, "Non précisé");

@@ -85,11 +85,10 @@
   // ---------------------------------------------------------------------
 
   async function fetchAll() {
-    const [actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT, attachToken] = await Promise.all([
+    const [actionsT, drT, ddT, structuresT, federationsT, cofinT, attachToken] = await Promise.all([
       grist.docApi.fetchTable(TABLES.actions),
       grist.docApi.fetchTable(TABLES.dr),
       grist.docApi.fetchTable(TABLES.dd),
-      grist.docApi.fetchTable(TABLES.agences),
       grist.docApi.fetchTable(TABLES.structures),
       grist.docApi.fetchTable(TABLES.federations),
       grist.docApi.fetchTable(TABLES.cofinancements),
@@ -97,7 +96,7 @@
     ]);
 
     actions = buildActions(
-      { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT },
+      { actionsT, drT, ddT, structuresT, federationsT, cofinT },
       {
         // Le jeton, quand il existe, fournit surtout la bonne base d'URL
         // (elle porte l'identifiant du document) ; c'est la clé de lien

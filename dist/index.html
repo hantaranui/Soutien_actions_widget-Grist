@@ -707,7 +707,6 @@ body {
     actions: "Actions",
     dr: "DR",
     dd: "DD",
-    agences: "Agences",
     structures: "Structures",
     federations: "Federations",
     cofinancements: "Cofinancements",
@@ -859,6 +858,14 @@ body {
     return String(value ?? "").trim().toLocaleLowerCase("fr-FR") === "oui";
   }
 
+  // La ville est une saisie libre portée par l'action (colonne texte
+  // Actions.Ville) : ni le club ni l'agence France Travail ne la
+  // déterminent. Elle peut donc être vide, d'où le repli.
+  function villeLabelFor(a) {
+    const ville = a.Ville && String(a.Ville).trim();
+    return ville || "Non précisée";
+  }
+
   // La date affichée dépend du statut : une date exacte n'a de sens que
   // pour une action "Planifiée" ; tant que c'est "A confirmer" (ou tout
   // autre statut), on affiche la période approximative en texte libre.
@@ -901,7 +908,7 @@ body {
   /**
    * Assemble les tables brutes (au format colonnes de grist.docApi.fetchTable)
    * en une liste d'actions prêtes à l'affichage : résolution des références
-   * (Club, Agence, Fédération, DR, DD), calcul de la jauge de financement à
+   * (Club, Fédération, DR, DD), calcul de la jauge de financement à
    * partir de Cofinancements, et labels formatés en français.
    *
    * Seul le statut retire une action du résultat : "Réalisée" ou "Annulée".
@@ -913,7 +920,7 @@ body {
    * auparavant écartées d'office, avant que le client demande de les
    * montrer à part plutôt que de les masquer.
    *
-   * @param {object} tables { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT }
+   * @param {object} tables { actionsT, drT, ddT, structuresT, federationsT, cofinT }
    *   — chacune au format renvoyé par grist.docApi.fetchTable.
    * @param {{baseUrl:string, linkKey?:string, token?:string}|null} attachAccess
    *   de quoi construire les URLs de téléchargement des logos
@@ -921,11 +928,10 @@ body {
    *   alors sur le placeholder). Voir photoUrlFor.
    */
   function buildActions(tables, attachAccess) {
-    const { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT } = tables;
+    const { actionsT, drT, ddT, structuresT, federationsT, cofinT } = tables;
 
     const drMap = indexById(rowsFromColumnTable(drT));
     const ddMap = indexById(rowsFromColumnTable(ddT));
-    const agenceMap = indexById(rowsFromColumnTable(agencesT));
     const structureMap = indexById(rowsFromColumnTable(structuresT));
     const federationMap = indexById(rowsFromColumnTable(federationsT));
     const cofinRows = rowsFromColumnTable(cofinT);
@@ -944,7 +950,6 @@ body {
       .map((a) => {
         const dr = a.DR ? drMap.get(a.DR) : null;
         const dd = a.DD ? ddMap.get(a.DD) : null;
-        const agence = a.Agence ? agenceMap.get(a.Agence) : null;
         const structure = a.Club ? structureMap.get(a.Club) : null;
         const federation = a.Federation ? federationMap.get(a.Federation) : null;
         const budget = Number(a.Budget) || 0;
@@ -961,7 +966,7 @@ body {
           dateLabel: dateLabelFor(a),
           dateTs: dateTsOf(a),
           clubLabel: structure ? structure.Nom : "Club non renseigné",
-          villeLabel: agence ? agence.Libelle_agence : "Non précisée",
+          villeLabel: villeLabelFor(a),
           federationLabel: federation ? federation.Nom : "Non précisée",
           regionLabel: dr ? dr.Nom : "",
           deptLabel: dd ? dd.Nom : "",
@@ -1429,11 +1434,10 @@ body {
   // ---------------------------------------------------------------------
 
   async function fetchAll() {
-    const [actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT, attachToken] = await Promise.all([
+    const [actionsT, drT, ddT, structuresT, federationsT, cofinT, attachToken] = await Promise.all([
       grist.docApi.fetchTable(TABLES.actions),
       grist.docApi.fetchTable(TABLES.dr),
       grist.docApi.fetchTable(TABLES.dd),
-      grist.docApi.fetchTable(TABLES.agences),
       grist.docApi.fetchTable(TABLES.structures),
       grist.docApi.fetchTable(TABLES.federations),
       grist.docApi.fetchTable(TABLES.cofinancements),
@@ -1441,7 +1445,7 @@ body {
     ]);
 
     actions = buildActions(
-      { actionsT, drT, ddT, agencesT, structuresT, federationsT, cofinT },
+      { actionsT, drT, ddT, structuresT, federationsT, cofinT },
       {
         // Le jeton, quand il existe, fournit surtout la bonne base d'URL
         // (elle porte l'identifiant du document) ; c'est la clé de lien
