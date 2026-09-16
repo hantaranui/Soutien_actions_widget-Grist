@@ -535,6 +535,60 @@ body {
   gap: 0 1rem;
 }
 
+/* Échelle du formulaire de la modale.
+
+   Le Design System dimensionne ses champs pour une page de formulaire
+   pleine largeur : libellé de 16px en gras, séparé de son champ par
+   2px seulement (.form-label { margin-bottom: .125rem }), et champ de
+   40px de haut en texte 16px. Empilés à six dans une modale, ces
+   réglages donnent un pavé massif où chaque libellé paraît collé à sa
+   boîte.
+
+   On garde le composant du DS tel quel — couleurs, bordures, rayons,
+   état de focus, message d'erreur — et on ne retouche que l'échelle
+   typographique et les espacements. */
+
+.lcse-modal .form-label {
+  font-size: 0.8125rem;
+  /* 600 plutôt que le 700 du DS : à cette taille, le gras plein tasse
+     le libellé au lieu de le détacher. */
+  font-weight: 600;
+  line-height: 1.3;
+  /* 8px au lieu de 2px. C'est la correction principale : sans cet air,
+     libellé et champ se lisent comme un seul bloc. */
+  margin-bottom: 0.5rem;
+}
+
+.lcse-modal .form-control {
+  height: 2.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Le textarea se dimensionne par son attribut rows, pas par une hauteur
+   fixe : on ne lui impose que le rythme vertical du texte. */
+.lcse-modal textarea.form-control {
+  height: auto;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  line-height: 1.45;
+}
+
+/* L'écart entre deux champs doit rester nettement supérieur à l'écart
+   libellé/champ ci-dessus : c'est ce rapport qui fait lire chaque paire
+   comme un groupe. Le DS remet .form-group à margin-bottom:0 dans une
+   règle ultérieure ; on refixe donc la valeur explicitement. */
+.lcse-modal .form-group {
+  margin-bottom: 1rem;
+}
+
+/* Le titre suit la même échelle : le h2 du DS (24px) écrasait une modale
+   dont plus rien d'autre n'est à cette taille. */
+.lcse-modal .modal-title {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
 /* Sur mobile, la modale occupe toute la zone du widget plutôt que d'être
    centrée verticalement : centrée, elle se positionne au milieu du cadre,
    qui peut être plus haut que ce que l'écran affiche réellement — d'où un
@@ -582,11 +636,23 @@ body {
   }
 
   .lcse-modal .form-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.875rem;
   }
 
+  /* Le libellé garde la taille du grand écran : cette règle l'agrandissait
+     (0.875rem) alors que la place manque justement ici. */
   .lcse-modal .form-label {
-    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+  }
+
+  /* Seule exception à la réduction : le texte saisi repasse à 16px. En
+     dessous, iOS Safari zoome automatiquement la page à la prise de focus
+     dans un champ — le widget se retrouve décadré et le visiteur doit
+     dézoomer à la main entre chaque champ. La densité se gagne donc ici
+     sur les marges intérieures, pas sur la taille du texte. */
+  .lcse-modal .form-control {
+    font-size: 1rem;
+    padding: 0.375rem 0.625rem;
   }
 
   .lcse-modal .modal-footer {
