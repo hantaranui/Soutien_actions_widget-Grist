@@ -172,62 +172,130 @@
     </div>`;
   }
 
-  function renderSentPanel(action) {
+  // Entête commune aux deux panneaux de la modale (formulaire, envoi
+  // confirmé) : structure .modal-header du Design System, avec son bouton
+  // de fermeture (présent sur toutes les démos Modal et Modal side du DS) :
+  // on doit pouvoir quitter la modale autrement qu'en validant. Le titre
+  // porte l'id visé par aria-labelledby.
+  function renderModalHeader(title, kicker, meta) {
     return `
-    <div class="modal-body lcse-sent-body">
-      <h3>Demande transmise</h3>
-      <p>La structure porteuse de « ${escapeHtml(action.intitule)} » vous répondra sous cinq jours ouvrés. Une copie de votre demande a été adressée au référent France Travail du territoire.</p>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" data-action="close">Fermer</button>
+    <div class="modal-header lcse-modal-header">
+      <div class="lcse-modal-heading">
+        ${kicker ? `<p class="lcse-modal-kicker">${escapeHtml(kicker)}</p>` : ""}
+        <h2 class="modal-title" id="lcse-modal-title">${escapeHtml(title)}</h2>
+        ${meta ? `<p class="lcse-modal-meta">${escapeHtml(meta)}</p>` : ""}
+      </div>
+      <button type="button" id="lcse-modal-close" class="btn-ratio-square btn btn-reset close" data-action="close">
+        <span aria-hidden="true" class="icon icon-close"></span>
+        <span class="sr-only">Fermer la fenêtre</span>
+      </button>
     </div>`;
   }
 
-  // uiState: { submitting: boolean, submitError: string }
-  function renderFormPanel(action, uiState) {
+  function renderSentPanel(action) {
     return `
-    <div class="lcse-modal-header">
-      <p class="lcse-modal-kicker">Soutenir une action</p>
-      <h3 class="modal-title">${escapeHtml(action.intitule)}</h3>
-      <p class="lcse-modal-meta">${escapeHtml(action.villeLabel)} · ${escapeHtml(action.federationLabel)}</p>
+    ${renderModalHeader("Demande transmise")}
+    <div class="modal-body lcse-sent-body">
+      <p>La structure porteuse de « ${escapeHtml(action.intitule)} » vous répondra sous cinq jours ouvrés. Une copie de votre demande a été adressée au référent France Travail du territoire.</p>
     </div>
-    <form id="lcse-support-form">
+    <div class="modal-footer">
+      <button type="button" id="lcse-sent-close" class="btn btn-secondary" data-action="close"><span class="btn-content">Fermer</span></button>
+    </div>`;
+  }
+
+  // Champs du formulaire de soutien, dans l'ordre d'affichage (le même
+  // que logic.SUPPORT_FIELDS). Balisage calqué sur les exemples de code
+  // Input du Design System : Défaut, Aide (help), Erreur, Email, Téléphone,
+  // Numérique et Append (unité accolée au champ).
+  const SUPPORT_FORM_FIELDS = [
+    { name: "prenom", label: "Prénom", required: true, attrs: 'autocomplete="given-name"' },
+    { name: "nom", label: "Nom", required: true, attrs: 'autocomplete="family-name"' },
+    { name: "organisation", label: "Organisation", required: true, attrs: 'autocomplete="organization"',
+      help: "Entreprise, collectivité ou association qui apporte le soutien." },
+    { name: "email", label: "Adresse électronique", required: true,
+      attrs: 'type="email" autocomplete="email" autocapitalize="none" autocorrect="off"',
+      help: "Exemple : nom@organisation.fr" },
+    { name: "telephone", label: "Téléphone", attrs: 'type="tel" inputmode="tel" autocomplete="tel-national"',
+      help: "Exemple : 0102030405" },
+    { name: "montant", label: "Montant envisagé", unit: "€", unitSr: "en euros",
+      attrs: 'type="text" inputmode="numeric"' },
+    { name: "message", label: "Message", textarea: true, full: true,
+      help: "Précisez la nature du soutien : financement, matériel, mécénat de compétences." },
+  ];
+
+  // Un champ du formulaire, avec son éventuel message d'erreur.
+  //
+  // Erreur (exemple Input · Erreur) : .has-error sur le groupe,
+  // .is-invalid + aria-invalid sur le champ, message .invalid-feedback
+  // préfixé de « Erreur : » pour les lecteurs d'écran, relié au champ par
+  // aria-describedby — comme le message d'aide, qu'il précède.
+  function renderSupportField(f, error) {
+    const id = `f-${f.name}`;
+    const errorId = `error-${id}`;
+    const helpId = `help-${id}`;
+    const describedBy = [error ? errorId : "", f.help ? helpId : ""].filter(Boolean).join(" ");
+    const fieldAttrs = [
+      `id="${id}"`,
+      `name="${f.name}"`,
+      `class="form-control${error ? " is-invalid" : ""}"`,
+      f.attrs || "",
+      f.required ? "required" : "",
+      describedBy ? `aria-describedby="${describedBy}"` : "",
+      error ? 'aria-invalid="true"' : "",
+    ].filter(Boolean).join(" ");
+
+    const control = f.textarea
+      ? `<textarea ${fieldAttrs} rows="3"></textarea>`
+      : `<input ${fieldAttrs}>`;
+
+    return `
+          <div class="form-group${f.full ? " lcse-form-full" : ""}${error ? " has-error" : ""}">
+            <label class="form-label" for="${id}">${f.label}${f.unitSr ? `<span class="sr-only">&nbsp;${f.unitSr}</span>` : ""}${f.required ? '<span class="required">&nbsp;*</span>' : ""}</label>
+            ${f.unit ? `<div class="input-group">
+              ${control}
+              <div class="input-group-append" aria-hidden="true"><span class="input-group-text">${f.unit}</span></div>
+            </div>` : control}
+            ${error ? `<p class="help-block invalid-feedback" id="${errorId}"><span class="sr-only">Erreur&nbsp;:&nbsp;</span>${escapeHtml(error)}</p>` : ""}
+            ${f.help ? `<p class="help-block" id="${helpId}">${f.help}</p>` : ""}
+          </div>`;
+  }
+
+  // uiState: { submitting: boolean, submitError: string,
+  //            fieldErrors: { [champ]: message } }
+  //
+  // Les champs sont groupés par paires (.lcse-form-grid) : deux colonnes,
+  // pour que la modale tienne sans ascenseur ; une seule sur mobile.
+  // L'ordre du HTML reste l'ordre de lecture dans les deux cas.
+  //
+  // novalidate : les erreurs sont affichées par le widget au format du
+  // Design System, pas par les bulles du navigateur. Les attributs
+  // required restent, pour que les lecteurs d'écran annoncent le caractère
+  // obligatoire.
+  //
+  // L'alerte d'échec d'envoi est toujours présente, masquée et vide : main.js
+  // y écrit le message après le rendu. Une zone role="alert" créée avec son
+  // texte déjà dedans n'est pas annoncée par tous les lecteurs d'écran.
+  function renderFormPanel(action, uiState) {
+    const fieldErrors = uiState.fieldErrors || {};
+    return `
+    ${renderModalHeader(action.intitule, "Soutenir une action", `${action.villeLabel} · ${action.federationLabel}`)}
+    <form id="lcse-support-form" novalidate>
       <div class="modal-body lcse-form-body">
-        ${uiState.submitError ? `<div class="alert alert-error" role="alert"><div class="alert-body"><p class="alert-content">${escapeHtml(uiState.submitError)}</p></div></div>` : ""}
-        <div class="form-group">
-          <label class="form-label" for="f-organisation">Organisation</label>
-          <input id="f-organisation" name="organisation" class="form-control" placeholder="Nom du financeur" required>
+        <p class="lcse-form-note">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
+        <div class="alert alert-error lcse-submit-alert" id="lcse-submit-alert" role="alert" hidden>
+          <div class="alert-body"><p class="alert-content" id="lcse-submit-alert-text"></p></div>
         </div>
-        <div class="lcse-modal-row">
-          <div class="form-group">
-            <label class="form-label" for="f-prenom">Prénom</label>
-            <input id="f-prenom" name="prenom" class="form-control" placeholder="Prénom" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-nom">Nom</label>
-            <input id="f-nom" name="nom" class="form-control" placeholder="Nom" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-email">Adresse électronique</label>
-          <input id="f-email" name="email" type="email" class="form-control" placeholder="nom@organisation.fr" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-telephone">Téléphone</label>
-          <input id="f-telephone" name="telephone" type="tel" class="form-control" placeholder="06 12 34 56 78">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-montant">Montant envisagé (facultatif)</label>
-          <input id="f-montant" name="montant" type="number" min="0" step="1" class="form-control" placeholder="en euros">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-message">Message</label>
-          <textarea id="f-message" name="message" class="form-control" rows="4" placeholder="Précisez la nature du soutien : financement, matériel, mécénat de compétences."></textarea>
+        <div class="lcse-form-grid">
+          ${SUPPORT_FORM_FIELDS.map((f) => renderSupportField(f, fieldErrors[f.name])).join("")}
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-action="close">Annuler</button>
-        <button type="submit" class="btn btn-primary" ${uiState.submitting ? "disabled" : ""}>${uiState.submitting ? "Envoi…" : "Envoyer"}</button>
+        <button type="button" id="lcse-cancel" class="btn btn-secondary" data-action="close"><span class="btn-content">Annuler</span></button>
+        ${uiState.submitting
+          // Bouton avec spinner (exemple Button · Loader). aria-disabled
+          // plutôt que disabled : le bouton garde le focus pendant l'envoi.
+          ? `<button type="submit" id="lcse-submit" class="btn btn-primary" aria-disabled="true"><span class="btn-content">Envoi en cours</span><ft-spinner class="icon" label="Envoi en cours" size="xs"></ft-spinner></button>`
+          : `<button type="submit" id="lcse-submit" class="btn btn-primary"><span class="btn-content">Envoyer</span></button>`}
       </div>
     </form>`;
   }
@@ -237,7 +305,7 @@
     const open = !!action;
     return `
     <div class="modal-backdrop ${open ? "show" : ""}" data-action="close" ${open ? "" : "hidden"}></div>
-    <div class="modal lcse-modal ${open ? "show" : ""}" tabindex="-1" ${open ? "" : "hidden"}>
+    <div class="modal lcse-modal ${open ? "show" : ""}" role="dialog" aria-modal="true" aria-labelledby="lcse-modal-title" tabindex="-1" ${open ? "" : "hidden"}>
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
           ${!open ? "" : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState)}
@@ -256,5 +324,7 @@
     renderModal,
     renderSentPanel,
     renderFormPanel,
+    renderSupportField,
+    SUPPORT_FORM_FIELDS,
   };
 });

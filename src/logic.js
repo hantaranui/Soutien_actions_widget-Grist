@@ -363,6 +363,64 @@
     };
   }
 
+  // ---------------------------------------------------------------------
+  // Formulaire de soutien : validation
+  // ---------------------------------------------------------------------
+
+  // Champs du formulaire, dans l'ordre d'affichage : c'est aussi l'ordre
+  // dans lequel on cherche la première erreur, où l'on place le focus.
+  const SUPPORT_FIELDS = ["prenom", "nom", "organisation", "email", "telephone", "montant", "message"];
+
+  // Espaces, points et tirets tolérés dans la saisie d'un numéro de
+  // téléphone (« 06 12 34 56 78 ») : on les retire avant contrôle.
+  function compactDigits(value) {
+    return String(value || "").replace(/[\s.\-]/g, "");
+  }
+
+  /**
+   * Montant saisi → nombre entier d'euros, ou null si vide. Renvoie NaN
+   * quand la saisie n'est pas un entier positif.
+   */
+  function parseMontant(value) {
+    // Espaces seulement (« 1 500 ») : un tiret ferait passer « -5 ».
+    const s = String(value || "").replace(/\s/g, "").replace(/€$/, "");
+    if (s === "") return null;
+    return /^\d+$/.test(s) ? Number(s) : NaN;
+  }
+
+  /**
+   * Contrôle du formulaire de soutien. Renvoie un objet { champ: message }
+   * (vide si tout est valide). Les messages disent ce qui ne va pas et
+   * comment le corriger, comme l'attend le RGAA (critère 11.11).
+   *
+   * @param {Object<string,string>} values valeurs brutes, par nom de champ.
+   */
+  function validateSupportForm(values) {
+    const v = (k) => String((values && values[k]) || "").trim();
+    const errors = {};
+
+    if (!v("prenom")) errors.prenom = "Renseignez votre prénom.";
+    if (!v("nom")) errors.nom = "Renseignez votre nom.";
+    if (!v("organisation")) errors.organisation = "Renseignez le nom de votre organisation.";
+
+    if (!v("email")) {
+      errors.email = "Renseignez votre adresse électronique.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email"))) {
+      errors.email = "L'adresse électronique n'est pas valide. Exemple : nom@organisation.fr";
+    }
+
+    const tel = compactDigits(v("telephone"));
+    if (tel && !/^(0\d{9}|\+33\d{9})$/.test(tel)) {
+      errors.telephone = "Le numéro doit comporter 10 chiffres. Exemple : 0102030405";
+    }
+
+    if (Number.isNaN(parseMontant(v("montant")))) {
+      errors.montant = "Saisissez un montant en euros, en chiffres uniquement. Exemple : 500";
+    }
+
+    return errors;
+  }
+
   const api = {
     ALL,
     TABLES,
@@ -387,6 +445,9 @@
     countLabelFor,
     paginate,
     getFilterOptions,
+    SUPPORT_FIELDS,
+    parseMontant,
+    validateSupportForm,
   };
 
   if (typeof module !== "undefined" && module.exports) {

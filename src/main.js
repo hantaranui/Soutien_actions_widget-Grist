@@ -13,7 +13,8 @@
   const {
     ALL, TABLES, FILTER_KEYS, PAGE_SIZE, TABS, TAB_OPEN,
     getFilterOptions, filterOptionsByQuery, buildActions, paginate,
-    actionsForTab, countLabelFor,
+    actionsForTab, countLabelFor, SUPPORT_FIELDS, parseMontant,
+    validateSupportForm,
   } = window.LCSE;
   const {
     renderEmptyState, renderCard, renderTabs, renderLoadMore, renderCombo,
@@ -54,6 +55,8 @@
     sent: false,
     submitting: false,
     submitError: "",
+    // Erreurs de saisie du formulaire de soutien, par nom de champ.
+    fieldErrors: {},
     // Filtres repliés d'emblée sur petit écran (ils y prennent toute la
     // hauteur visible), dépliés sur grand écran où la place ne manque pas.
     filtersOpen: !(typeof window !== "undefined" && window.matchMedia
@@ -187,10 +190,149 @@
     ${renderLoadMore(pagination)}
   `;
 
-    modalRoot.innerHTML = renderModal(openAction, state);
+    renderModalRoot(openAction);
 
     bindEvents();
   }
+
+  // --- Modale : rendu, focus, clavier ----------------------------------
+  //
+  // render() reconstruit tout le HTML à chaque changement d'état. Pour la
+  // modale, cela ferait perdre à la fois les saisies (un échec d'envoi
+  // viderait le formulaire) et le focus clavier. On les capture donc avant
+  // le rendu et on les restaure après.
+
+  // Id de l'action dont le bouton « Soutenir » a ouvert la modale : le
+  // focus y revient à la fermeture (motif « dialog » d'ARIA, RGAA 12.8).
+  let modalTriggerId = null;
+  let modalWasOpen = false;
+  // Champ à focaliser au prochain rendu de la modale (premier champ en
+  // erreur après une tentative d'envoi), prioritaire sur le focus courant.
+  let pendingFocusId = "";
+  // Dernier message d'échec d'envoi déjà annoncé aux lecteurs d'écran.
+  let announcedError = "";
+
+  function renderModalRoot(openAction) {
+    const oldForm = document.getElementById("lcse-support-form");
+    const values = oldForm ? Object.fromEntries(new FormData(oldForm)) : null;
+    const focused = modalRoot.contains(document.activeElement) ? document.activeElement.id : "";
+
+    modalRoot.innerHTML = renderModal(openAction, state);
+
+    const open = !!openAction;
+    // Le reste de la page devient inerte derrière la modale : ni clic, ni
+    // tabulation, ni lecture par les lecteurs d'écran.
+    app.inert = open;
+    const header = document.querySelector(".lcse-header");
+    if (header) header.inert = open;
+
+    const newForm = document.getElementById("lcse-support-form");
+    if (newForm && values) {
+      for (const [name, value] of Object.entries(values)) {
+        const field = newForm.elements.namedItem(name);
+        if (field) field.value = value;
+      }
+    }
+
+    if (open) {
+      // À l'ouverture, ou quand l'élément qui avait le focus a disparu
+      // (passage au message de confirmation) : premier élément tabulable,
+      // le bouton de fermeture en pratique.
+      const wanted = pendingFocusId || focused;
+      pendingFocusId = "";
+      const target = (wanted && document.getElementById(wanted)) || focusableIn(modalRoot)[0];
+      if (target) target.focus();
+
+      // Alerte d'échec d'envoi : rendue masquée et vide, on n'y écrit le
+      // message qu'une fois la zone en place, pour qu'il soit annoncé.
+      // Un message déjà annoncé est réaffiché d'emblée lors des rendus
+      // suivants, sans être relu.
+      const alertEl = document.getElementById("lcse-submit-alert");
+      const message = state.submitError;
+      if (alertEl && message) {
+        const show = () => {
+          const text = document.getElementById("lcse-submit-alert-text");
+          if (!text || !alertEl.isConnected) return;
+          alertEl.hidden = false;
+          text.textContent = message;
+        };
+        if (message === announcedError) show();
+        else { announcedError = message; setTimeout(show, 100); }
+      }
+      if (!message) announcedError = "";
+    } else if (modalWasOpen) {
+      const trigger = app.querySelector(`[data-action="support"][data-id="${modalTriggerId}"]`);
+      // Si le bouton n'existe plus, on se rabat sur le titre de la page.
+      const fallback = app.querySelector("h1");
+      if (trigger) trigger.focus();
+      else if (fallback) { fallback.tabIndex = -1; fallback.focus(); }
+    }
+    modalWasOpen = open;
+  }
+
+  function focusableIn(root) {
+    return Array.from(root.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter((el) => el.offsetParent !== null || el === document.activeElement);
+  }
+
+  function openModal(actionId) {
+    modalTriggerId = actionId;
+    state.openActionId = actionId;
+    state.sent = false;
+    state.submitError = "";
+    state.fieldErrors = {};
+    render();
+  }
+
+  function closeModal() {
+    state.openActionId = null;
+    state.sent = false;
+    state.submitError = "";
+    state.fieldErrors = {};
+    render();
+  }
+
+  // Retire l'erreur d'un champ sans re-rendre la modale (ce qui déplacerait
+  // le curseur) : dès que la saisie devient valide, le message disparaît.
+  function clearFieldError(name) {
+    delete state.fieldErrors[name];
+    const field = document.getElementById(`f-${name}`);
+    if (!field) return;
+    const group = field.closest(".form-group");
+    if (group) group.classList.remove("has-error");
+    field.classList.remove("is-invalid");
+    field.removeAttribute("aria-invalid");
+    const errorEl = document.getElementById(`error-f-${name}`);
+    if (errorEl) errorEl.remove();
+    const rest = (field.getAttribute("aria-describedby") || "")
+      .split(" ").filter((id) => id && id !== `error-f-${name}`).join(" ");
+    if (rest) field.setAttribute("aria-describedby", rest);
+    else field.removeAttribute("aria-describedby");
+  }
+
+  // Écouteur unique (le document n'est jamais re-rendu) : Échap ferme la
+  // modale, Tab et Maj+Tab bouclent à l'intérieur.
+  document.addEventListener("keydown", (e) => {
+    if (state.openActionId === null) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeModal();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const items = focusableIn(modalRoot);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !modalRoot.contains(document.activeElement))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (document.activeElement === last || !modalRoot.contains(document.activeElement))) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
 
   // ---------------------------------------------------------------------
   // Événements
@@ -290,28 +432,28 @@
     });
 
     app.querySelectorAll('[data-action="support"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        state.openActionId = Number(el.getAttribute("data-id"));
-        state.sent = false;
-        state.submitError = "";
-        render();
-      });
+      el.addEventListener("click", () => openModal(Number(el.getAttribute("data-id"))));
     });
 
     modalRoot.querySelectorAll('[data-action="close"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        state.openActionId = null;
-        state.sent = false;
-        state.submitError = "";
-        render();
-      });
+      el.addEventListener("click", closeModal);
     });
 
     const modalContent = modalRoot.querySelector(".modal-content");
     if (modalContent) modalContent.addEventListener("click", (e) => e.stopPropagation());
 
     const form = document.getElementById("lcse-support-form");
-    if (form) form.addEventListener("submit", onSubmitForm);
+    if (form) {
+      form.addEventListener("submit", onSubmitForm);
+      // On ne signale pas d'erreur pendant la frappe ; on retire seulement
+      // celles qui viennent d'être corrigées.
+      form.addEventListener("input", (e) => {
+        const name = e.target && e.target.name;
+        if (!name || !state.fieldErrors[name]) return;
+        const errors = validateSupportForm(Object.fromEntries(new FormData(form)));
+        if (!errors[name]) clearFieldError(name);
+      });
+    }
   }
 
   // Ne met à jour que la liste déroulante d'un combobox (pas tout `app`),
@@ -337,14 +479,27 @@
 
   async function onSubmitForm(e) {
     e.preventDefault();
+    // Le bouton d'envoi reste focalisable pendant l'envoi (aria-disabled
+    // plutôt que disabled, qui lui ferait perdre le focus) : c'est ici
+    // qu'on bloque un second envoi.
+    if (state.submitting) return;
     const action = actions.find((a) => a.id === state.openActionId);
     if (!action) return;
 
     const data = new FormData(e.target);
-    const montantRaw = data.get("montant");
+    const errors = validateSupportForm(Object.fromEntries(data));
+    const firstInvalid = SUPPORT_FIELDS.find((name) => errors[name]);
+    state.fieldErrors = errors;
+    state.submitError = "";
+    if (firstInvalid) {
+      // Focus sur le premier champ en erreur : son message est lu avec
+      // lui (aria-describedby).
+      pendingFocusId = `f-${firstInvalid}`;
+      render();
+      return;
+    }
 
     state.submitting = true;
-    state.submitError = "";
     render();
 
     try {
@@ -358,7 +513,7 @@
           Nom: String(data.get("nom") || "").trim(),
           Email: String(data.get("email") || "").trim(),
           Telephone: String(data.get("telephone") || "").trim(),
-          Montant: montantRaw ? Number(montantRaw) : null,
+          Montant: parseMontant(data.get("montant")),
           Message: String(data.get("message") || "").trim(),
           Date: Math.floor(Date.now() / 1000),
           Action_financee: action.id,

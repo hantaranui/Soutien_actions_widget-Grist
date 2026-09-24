@@ -519,3 +519,56 @@ describe("sortByDateAsc", () => {
     assert.deepEqual(LCSE.sortByDateAsc([]), []);
   });
 });
+
+describe("validateSupportForm", () => {
+  const VALID = { prenom: "Anaïs", nom: "Guillon", organisation: "Crédit Local", email: "anais@credit-local.fr", telephone: "", montant: "", message: "" };
+
+  test("formulaire complet : aucune erreur", () => {
+    assert.deepEqual(LCSE.validateSupportForm(VALID), {});
+  });
+
+  test("champs obligatoires vides (ou faits d'espaces)", () => {
+    const errors = LCSE.validateSupportForm({ ...VALID, prenom: "  ", nom: "", organisation: "", email: "" });
+    assert.deepEqual(Object.keys(errors), ["prenom", "nom", "organisation", "email"]);
+    assert.equal(errors.email, "Renseignez votre adresse électronique.");
+  });
+
+  test("adresse électronique mal formée : message avec exemple", () => {
+    const errors = LCSE.validateSupportForm({ ...VALID, email: "anais@credit" });
+    assert.match(errors.email, /n'est pas valide\. Exemple : nom@organisation\.fr/);
+  });
+
+  test("téléphone facultatif, mais contrôlé s'il est saisi", () => {
+    assert.deepEqual(LCSE.validateSupportForm({ ...VALID, telephone: "06 12 34 56 78" }), {});
+    assert.deepEqual(LCSE.validateSupportForm({ ...VALID, telephone: "+33612345678" }), {});
+    assert.deepEqual(LCSE.validateSupportForm({ ...VALID, telephone: "06.12.34.56.78" }), {});
+    assert.match(LCSE.validateSupportForm({ ...VALID, telephone: "0612" }).telephone, /10 chiffres/);
+  });
+
+  test("montant facultatif, entier positif", () => {
+    assert.deepEqual(LCSE.validateSupportForm({ ...VALID, montant: "1 500" }), {});
+    assert.match(LCSE.validateSupportForm({ ...VALID, montant: "mille" }).montant, /en chiffres/);
+    assert.match(LCSE.validateSupportForm({ ...VALID, montant: "-5" }).montant, /en chiffres/);
+  });
+
+  test("SUPPORT_FIELDS liste tous les champs contrôlés, dans l'ordre d'affichage", () => {
+    const errors = LCSE.validateSupportForm({});
+    const order = LCSE.SUPPORT_FIELDS.filter((k) => errors[k]);
+    assert.deepEqual(Object.keys(errors), order);
+  });
+});
+
+describe("parseMontant", () => {
+  test("vide → null", () => {
+    assert.equal(LCSE.parseMontant(""), null);
+    assert.equal(LCSE.parseMontant(null), null);
+  });
+  test("espaces et symbole € tolérés", () => {
+    assert.equal(LCSE.parseMontant("1 500"), 1500);
+    assert.equal(LCSE.parseMontant("500€"), 500);
+  });
+  test("saisie non numérique → NaN", () => {
+    assert.ok(Number.isNaN(LCSE.parseMontant("12,5")));
+    assert.ok(Number.isNaN(LCSE.parseMontant("abc")));
+  });
+});

@@ -475,7 +475,7 @@ body {
 .lcse-card-progress .progress { width: 100%; height: 0.625rem; }
 .lcse-card-progress .progress-bar { background-color: var(--ft--color-primary, #283276); height: 100%; }
 
-/* Modale de soutien */
+/* Modale de soutien (modale centrée .modal-lg du Design System) */
 
 .modal-backdrop.show,
 .lcse-modal.show {
@@ -501,100 +501,77 @@ body {
   min-height: 0;
 }
 
-.lcse-modal-header {
-  background: var(--ft--color-primary-05, #eaecfb);
-  padding: 1.25rem 1.5rem;
+/* Entête : .modal-header du DS (titre à gauche, bouton de fermeture à
+   droite), sur fond bleu clair. */
+.lcse-modal .lcse-modal-header {
+  gap: var(--ft-spacer-s2, 1rem);
+  padding: var(--ft-spacer-m1, 1.25rem) var(--ft-spacer-m2, 1.5rem);
+  background: var(--ft-color-background-primary-weakest, #eaecfb);
+}
+
+.lcse-modal-heading {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .lcse-modal-kicker {
-  margin: 0 0 0.25rem;
-  font-size: 0.75rem;
+  margin: 0 0 var(--ft-spacer-xs1, 0.25rem);
+  font-size: var(--ft-font-size-text-xsmall, 0.75rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ft--color-primary, #283276);
+  color: var(--ft-color-text-primary-default, #283276);
 }
 
 .lcse-modal-meta {
-  margin: 0.125rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--ft--color-background-neutral-default-strong, #5b5d65);
+  margin: var(--ft-spacer-xxs, 0.125rem) 0 0;
+  font-size: var(--ft-font-size-text-small, 0.875rem);
+  color: var(--ft-color-text-content-weak, #5b5d65);
 }
 
-.lcse-form-body {
-  padding-top: 1.5rem !important;
+.lcse-modal .modal-body.lcse-form-body,
+.lcse-modal .modal-body.lcse-sent-body {
+  padding-top: var(--ft-spacer-m2, 1.5rem);
 }
 
-.lcse-sent-body {
-  padding-top: 1.75rem !important;
+.lcse-form-note {
+  margin: 0 0 var(--ft-spacer-s2, 1rem);
+  font-size: var(--ft-font-size-text-small, 0.875rem);
+  color: var(--ft-color-text-content-weak, #5b5d65);
 }
 
-.lcse-modal-row {
+/* Champs par paires. Deux colonnes dans la modale centrée (large de
+   800px au plus) : quatre lignes au lieu de sept, la modale tient sans
+   ascenseur. Les champs gardent
+   l'échelle du Design System (libellé 16px, champ 40px). */
+.lcse-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 1rem;
+  column-gap: var(--ft-spacer-s2, 1rem);
 }
 
-/* Échelle du formulaire de la modale.
-
-   Le Design System dimensionne ses champs pour une page de formulaire
-   pleine largeur : libellé de 16px en gras, séparé de son champ par
-   2px seulement (.form-label { margin-bottom: .125rem }), et champ de
-   40px de haut en texte 16px. Empilés à six dans une modale, ces
-   réglages donnent un pavé massif où chaque libellé paraît collé à sa
-   boîte.
-
-   On garde le composant du DS tel quel — couleurs, bordures, rayons,
-   état de focus, message d'erreur — et on ne retouche que l'échelle
-   typographique et les espacements. */
-
-.lcse-modal .form-label {
-  font-size: 0.8125rem;
-  /* 600 plutôt que le 700 du DS : à cette taille, le gras plein tasse
-     le libellé au lieu de le détacher. */
-  font-weight: 600;
-  line-height: 1.3;
-  /* 8px au lieu de 2px. C'est la correction principale : sans cet air,
-     libellé et champ se lisent comme un seul bloc. */
-  margin-bottom: 0.5rem;
+.lcse-form-full {
+  grid-column: 1 / -1;
 }
 
-.lcse-modal .form-control {
-  height: 2.25rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
+/* Le DS n'affiche le message d'erreur que s'il suit directement le champ
+   (.is-invalid ~ .invalid-feedback). Pour le Montant, le champ est dans un
+   .input-group : on rattache donc l'affichage au groupe en erreur. */
+.lcse-modal .has-error .invalid-feedback {
+  display: block;
 }
 
-/* Le textarea se dimensionne par son attribut rows, pas par une hauteur
-   fixe : on ne lui impose que le rythme vertical du texte. */
-.lcse-modal textarea.form-control {
-  height: auto;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  line-height: 1.45;
-}
-
-/* L'écart entre deux champs doit rester nettement supérieur à l'écart
-   libellé/champ ci-dessus : c'est ce rapport qui fait lire chaque paire
-   comme un groupe. Le DS remet .form-group à margin-bottom:0 dans une
-   règle ultérieure ; on refixe donc la valeur explicitement. */
+/* Le DS remet .form-group à margin-bottom:0 dans une règle ultérieure ;
+   on refixe donc l'écart entre deux champs explicitement. */
 .lcse-modal .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--ft-spacer-s2, 1rem);
 }
 
-/* Le titre suit la même échelle : le h2 du DS (24px) écrasait une modale
-   dont plus rien d'autre n'est à cette taille. */
-.lcse-modal .modal-title {
-  font-size: 1.25rem;
-  line-height: 1.3;
-}
-
-/* Sur mobile, la modale occupe toute la zone du widget plutôt que d'être
-   centrée verticalement : centrée, elle se positionne au milieu du cadre,
-   qui peut être plus haut que ce que l'écran affiche réellement — d'où un
-   titre coupé en haut. Ancrée en haut et en pleine hauteur, elle est
-   toujours entièrement visible. Les espacements sont aussi resserrés pour
-   que le formulaire tienne sans que tout paraisse surdimensionné. */
+/* Sur mobile, les deux présentations occupent toute la zone du widget
+   plutôt que d'être centrées verticalement : centrée, la modale se
+   positionne au milieu du cadre, qui peut être plus haut que ce que
+   l'écran affiche réellement — d'où un titre coupé en haut. Ancrée en
+   haut et en pleine hauteur, elle est toujours entièrement visible. */
 @media (max-width: 680px) {
   .lcse-modal .modal-dialog {
     width: 100%;
@@ -613,8 +590,12 @@ body {
     border: 0;
   }
 
-  .lcse-modal-header {
-    padding: 0.875rem 1rem;
+  .lcse-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lcse-modal .lcse-modal-header {
+    padding: var(--ft-spacer-s1, 0.75rem) var(--ft-spacer-s2, 1rem);
   }
 
   .lcse-modal-kicker {
@@ -622,41 +603,9 @@ body {
     display: none;
   }
 
-  .lcse-modal .modal-title {
-    font-size: 1rem;
-    line-height: 1.3;
-  }
-
-  .lcse-modal-meta {
-    font-size: 0.75rem;
-  }
-
-  .lcse-modal .modal-body {
-    padding: 1rem !important;
-  }
-
-  .lcse-modal .form-group {
-    margin-bottom: 0.875rem;
-  }
-
-  /* Le libellé garde la taille du grand écran : cette règle l'agrandissait
-     (0.875rem) alors que la place manque justement ici. */
-  .lcse-modal .form-label {
-    margin-bottom: 0.375rem;
-  }
-
-  /* Seule exception à la réduction : le texte saisi repasse à 16px. En
-     dessous, iOS Safari zoome automatiquement la page à la prise de focus
-     dans un champ — le widget se retrouve décadré et le visiteur doit
-     dézoomer à la main entre chaque champ. La densité se gagne donc ici
-     sur les marges intérieures, pas sur la taille du texte. */
-  .lcse-modal .form-control {
-    font-size: 1rem;
-    padding: 0.375rem 0.625rem;
-  }
-
-  .lcse-modal .modal-footer {
-    padding: 0.75rem 1rem;
+  .lcse-modal .modal-body.lcse-form-body,
+  .lcse-modal .modal-body.lcse-sent-body {
+    padding: var(--ft-spacer-s2, 1rem);
   }
 }
 
@@ -1115,6 +1064,64 @@ body {
     };
   }
 
+  // ---------------------------------------------------------------------
+  // Formulaire de soutien : validation
+  // ---------------------------------------------------------------------
+
+  // Champs du formulaire, dans l'ordre d'affichage : c'est aussi l'ordre
+  // dans lequel on cherche la première erreur, où l'on place le focus.
+  const SUPPORT_FIELDS = ["prenom", "nom", "organisation", "email", "telephone", "montant", "message"];
+
+  // Espaces, points et tirets tolérés dans la saisie d'un numéro de
+  // téléphone (« 06 12 34 56 78 ») : on les retire avant contrôle.
+  function compactDigits(value) {
+    return String(value || "").replace(/[\s.\-]/g, "");
+  }
+
+  /**
+   * Montant saisi → nombre entier d'euros, ou null si vide. Renvoie NaN
+   * quand la saisie n'est pas un entier positif.
+   */
+  function parseMontant(value) {
+    // Espaces seulement (« 1 500 ») : un tiret ferait passer « -5 ».
+    const s = String(value || "").replace(/\s/g, "").replace(/€$/, "");
+    if (s === "") return null;
+    return /^\d+$/.test(s) ? Number(s) : NaN;
+  }
+
+  /**
+   * Contrôle du formulaire de soutien. Renvoie un objet { champ: message }
+   * (vide si tout est valide). Les messages disent ce qui ne va pas et
+   * comment le corriger, comme l'attend le RGAA (critère 11.11).
+   *
+   * @param {Object<string,string>} values valeurs brutes, par nom de champ.
+   */
+  function validateSupportForm(values) {
+    const v = (k) => String((values && values[k]) || "").trim();
+    const errors = {};
+
+    if (!v("prenom")) errors.prenom = "Renseignez votre prénom.";
+    if (!v("nom")) errors.nom = "Renseignez votre nom.";
+    if (!v("organisation")) errors.organisation = "Renseignez le nom de votre organisation.";
+
+    if (!v("email")) {
+      errors.email = "Renseignez votre adresse électronique.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email"))) {
+      errors.email = "L'adresse électronique n'est pas valide. Exemple : nom@organisation.fr";
+    }
+
+    const tel = compactDigits(v("telephone"));
+    if (tel && !/^(0\d{9}|\+33\d{9})$/.test(tel)) {
+      errors.telephone = "Le numéro doit comporter 10 chiffres. Exemple : 0102030405";
+    }
+
+    if (Number.isNaN(parseMontant(v("montant")))) {
+      errors.montant = "Saisissez un montant en euros, en chiffres uniquement. Exemple : 500";
+    }
+
+    return errors;
+  }
+
   const api = {
     ALL,
     TABLES,
@@ -1139,6 +1146,9 @@ body {
     countLabelFor,
     paginate,
     getFilterOptions,
+    SUPPORT_FIELDS,
+    parseMontant,
+    validateSupportForm,
   };
 
   if (typeof module !== "undefined" && module.exports) {
@@ -1324,62 +1334,130 @@ body {
     </div>`;
   }
 
-  function renderSentPanel(action) {
+  // Entête commune aux deux panneaux de la modale (formulaire, envoi
+  // confirmé) : structure .modal-header du Design System, avec son bouton
+  // de fermeture (présent sur toutes les démos Modal et Modal side du DS) :
+  // on doit pouvoir quitter la modale autrement qu'en validant. Le titre
+  // porte l'id visé par aria-labelledby.
+  function renderModalHeader(title, kicker, meta) {
     return `
-    <div class="modal-body lcse-sent-body">
-      <h3>Demande transmise</h3>
-      <p>La structure porteuse de « ${escapeHtml(action.intitule)} » vous répondra sous cinq jours ouvrés. Une copie de votre demande a été adressée au référent France Travail du territoire.</p>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" data-action="close">Fermer</button>
+    <div class="modal-header lcse-modal-header">
+      <div class="lcse-modal-heading">
+        ${kicker ? `<p class="lcse-modal-kicker">${escapeHtml(kicker)}</p>` : ""}
+        <h2 class="modal-title" id="lcse-modal-title">${escapeHtml(title)}</h2>
+        ${meta ? `<p class="lcse-modal-meta">${escapeHtml(meta)}</p>` : ""}
+      </div>
+      <button type="button" id="lcse-modal-close" class="btn-ratio-square btn btn-reset close" data-action="close">
+        <span aria-hidden="true" class="icon icon-close"></span>
+        <span class="sr-only">Fermer la fenêtre</span>
+      </button>
     </div>`;
   }
 
-  // uiState: { submitting: boolean, submitError: string }
-  function renderFormPanel(action, uiState) {
+  function renderSentPanel(action) {
     return `
-    <div class="lcse-modal-header">
-      <p class="lcse-modal-kicker">Soutenir une action</p>
-      <h3 class="modal-title">${escapeHtml(action.intitule)}</h3>
-      <p class="lcse-modal-meta">${escapeHtml(action.villeLabel)} · ${escapeHtml(action.federationLabel)}</p>
+    ${renderModalHeader("Demande transmise")}
+    <div class="modal-body lcse-sent-body">
+      <p>La structure porteuse de « ${escapeHtml(action.intitule)} » vous répondra sous cinq jours ouvrés. Une copie de votre demande a été adressée au référent France Travail du territoire.</p>
     </div>
-    <form id="lcse-support-form">
+    <div class="modal-footer">
+      <button type="button" id="lcse-sent-close" class="btn btn-secondary" data-action="close"><span class="btn-content">Fermer</span></button>
+    </div>`;
+  }
+
+  // Champs du formulaire de soutien, dans l'ordre d'affichage (le même
+  // que logic.SUPPORT_FIELDS). Balisage calqué sur les exemples de code
+  // Input du Design System : Défaut, Aide (help), Erreur, Email, Téléphone,
+  // Numérique et Append (unité accolée au champ).
+  const SUPPORT_FORM_FIELDS = [
+    { name: "prenom", label: "Prénom", required: true, attrs: 'autocomplete="given-name"' },
+    { name: "nom", label: "Nom", required: true, attrs: 'autocomplete="family-name"' },
+    { name: "organisation", label: "Organisation", required: true, attrs: 'autocomplete="organization"',
+      help: "Entreprise, collectivité ou association qui apporte le soutien." },
+    { name: "email", label: "Adresse électronique", required: true,
+      attrs: 'type="email" autocomplete="email" autocapitalize="none" autocorrect="off"',
+      help: "Exemple : nom@organisation.fr" },
+    { name: "telephone", label: "Téléphone", attrs: 'type="tel" inputmode="tel" autocomplete="tel-national"',
+      help: "Exemple : 0102030405" },
+    { name: "montant", label: "Montant envisagé", unit: "€", unitSr: "en euros",
+      attrs: 'type="text" inputmode="numeric"' },
+    { name: "message", label: "Message", textarea: true, full: true,
+      help: "Précisez la nature du soutien : financement, matériel, mécénat de compétences." },
+  ];
+
+  // Un champ du formulaire, avec son éventuel message d'erreur.
+  //
+  // Erreur (exemple Input · Erreur) : .has-error sur le groupe,
+  // .is-invalid + aria-invalid sur le champ, message .invalid-feedback
+  // préfixé de « Erreur : » pour les lecteurs d'écran, relié au champ par
+  // aria-describedby — comme le message d'aide, qu'il précède.
+  function renderSupportField(f, error) {
+    const id = `f-${f.name}`;
+    const errorId = `error-${id}`;
+    const helpId = `help-${id}`;
+    const describedBy = [error ? errorId : "", f.help ? helpId : ""].filter(Boolean).join(" ");
+    const fieldAttrs = [
+      `id="${id}"`,
+      `name="${f.name}"`,
+      `class="form-control${error ? " is-invalid" : ""}"`,
+      f.attrs || "",
+      f.required ? "required" : "",
+      describedBy ? `aria-describedby="${describedBy}"` : "",
+      error ? 'aria-invalid="true"' : "",
+    ].filter(Boolean).join(" ");
+
+    const control = f.textarea
+      ? `<textarea ${fieldAttrs} rows="3"></textarea>`
+      : `<input ${fieldAttrs}>`;
+
+    return `
+          <div class="form-group${f.full ? " lcse-form-full" : ""}${error ? " has-error" : ""}">
+            <label class="form-label" for="${id}">${f.label}${f.unitSr ? `<span class="sr-only">&nbsp;${f.unitSr}</span>` : ""}${f.required ? '<span class="required">&nbsp;*</span>' : ""}</label>
+            ${f.unit ? `<div class="input-group">
+              ${control}
+              <div class="input-group-append" aria-hidden="true"><span class="input-group-text">${f.unit}</span></div>
+            </div>` : control}
+            ${error ? `<p class="help-block invalid-feedback" id="${errorId}"><span class="sr-only">Erreur&nbsp;:&nbsp;</span>${escapeHtml(error)}</p>` : ""}
+            ${f.help ? `<p class="help-block" id="${helpId}">${f.help}</p>` : ""}
+          </div>`;
+  }
+
+  // uiState: { submitting: boolean, submitError: string,
+  //            fieldErrors: { [champ]: message } }
+  //
+  // Les champs sont groupés par paires (.lcse-form-grid) : deux colonnes,
+  // pour que la modale tienne sans ascenseur ; une seule sur mobile.
+  // L'ordre du HTML reste l'ordre de lecture dans les deux cas.
+  //
+  // novalidate : les erreurs sont affichées par le widget au format du
+  // Design System, pas par les bulles du navigateur. Les attributs
+  // required restent, pour que les lecteurs d'écran annoncent le caractère
+  // obligatoire.
+  //
+  // L'alerte d'échec d'envoi est toujours présente, masquée et vide : main.js
+  // y écrit le message après le rendu. Une zone role="alert" créée avec son
+  // texte déjà dedans n'est pas annoncée par tous les lecteurs d'écran.
+  function renderFormPanel(action, uiState) {
+    const fieldErrors = uiState.fieldErrors || {};
+    return `
+    ${renderModalHeader(action.intitule, "Soutenir une action", `${action.villeLabel} · ${action.federationLabel}`)}
+    <form id="lcse-support-form" novalidate>
       <div class="modal-body lcse-form-body">
-        ${uiState.submitError ? `<div class="alert alert-error" role="alert"><div class="alert-body"><p class="alert-content">${escapeHtml(uiState.submitError)}</p></div></div>` : ""}
-        <div class="form-group">
-          <label class="form-label" for="f-organisation">Organisation</label>
-          <input id="f-organisation" name="organisation" class="form-control" placeholder="Nom du financeur" required>
+        <p class="lcse-form-note">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
+        <div class="alert alert-error lcse-submit-alert" id="lcse-submit-alert" role="alert" hidden>
+          <div class="alert-body"><p class="alert-content" id="lcse-submit-alert-text"></p></div>
         </div>
-        <div class="lcse-modal-row">
-          <div class="form-group">
-            <label class="form-label" for="f-prenom">Prénom</label>
-            <input id="f-prenom" name="prenom" class="form-control" placeholder="Prénom" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-nom">Nom</label>
-            <input id="f-nom" name="nom" class="form-control" placeholder="Nom" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-email">Adresse électronique</label>
-          <input id="f-email" name="email" type="email" class="form-control" placeholder="nom@organisation.fr" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-telephone">Téléphone</label>
-          <input id="f-telephone" name="telephone" type="tel" class="form-control" placeholder="06 12 34 56 78">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-montant">Montant envisagé (facultatif)</label>
-          <input id="f-montant" name="montant" type="number" min="0" step="1" class="form-control" placeholder="en euros">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-message">Message</label>
-          <textarea id="f-message" name="message" class="form-control" rows="4" placeholder="Précisez la nature du soutien : financement, matériel, mécénat de compétences."></textarea>
+        <div class="lcse-form-grid">
+          ${SUPPORT_FORM_FIELDS.map((f) => renderSupportField(f, fieldErrors[f.name])).join("")}
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-action="close">Annuler</button>
-        <button type="submit" class="btn btn-primary" ${uiState.submitting ? "disabled" : ""}>${uiState.submitting ? "Envoi…" : "Envoyer"}</button>
+        <button type="button" id="lcse-cancel" class="btn btn-secondary" data-action="close"><span class="btn-content">Annuler</span></button>
+        ${uiState.submitting
+          // Bouton avec spinner (exemple Button · Loader). aria-disabled
+          // plutôt que disabled : le bouton garde le focus pendant l'envoi.
+          ? `<button type="submit" id="lcse-submit" class="btn btn-primary" aria-disabled="true"><span class="btn-content">Envoi en cours</span><ft-spinner class="icon" label="Envoi en cours" size="xs"></ft-spinner></button>`
+          : `<button type="submit" id="lcse-submit" class="btn btn-primary"><span class="btn-content">Envoyer</span></button>`}
       </div>
     </form>`;
   }
@@ -1389,7 +1467,7 @@ body {
     const open = !!action;
     return `
     <div class="modal-backdrop ${open ? "show" : ""}" data-action="close" ${open ? "" : "hidden"}></div>
-    <div class="modal lcse-modal ${open ? "show" : ""}" tabindex="-1" ${open ? "" : "hidden"}>
+    <div class="modal lcse-modal ${open ? "show" : ""}" role="dialog" aria-modal="true" aria-labelledby="lcse-modal-title" tabindex="-1" ${open ? "" : "hidden"}>
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
           ${!open ? "" : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState)}
@@ -1408,6 +1486,8 @@ body {
     renderModal,
     renderSentPanel,
     renderFormPanel,
+    renderSupportField,
+    SUPPORT_FORM_FIELDS,
   };
 });
 
@@ -1428,7 +1508,8 @@ body {
   const {
     ALL, TABLES, FILTER_KEYS, PAGE_SIZE, TABS, TAB_OPEN,
     getFilterOptions, filterOptionsByQuery, buildActions, paginate,
-    actionsForTab, countLabelFor,
+    actionsForTab, countLabelFor, SUPPORT_FIELDS, parseMontant,
+    validateSupportForm,
   } = window.LCSE;
   const {
     renderEmptyState, renderCard, renderTabs, renderLoadMore, renderCombo,
@@ -1469,6 +1550,8 @@ body {
     sent: false,
     submitting: false,
     submitError: "",
+    // Erreurs de saisie du formulaire de soutien, par nom de champ.
+    fieldErrors: {},
     // Filtres repliés d'emblée sur petit écran (ils y prennent toute la
     // hauteur visible), dépliés sur grand écran où la place ne manque pas.
     filtersOpen: !(typeof window !== "undefined" && window.matchMedia
@@ -1602,10 +1685,149 @@ body {
     ${renderLoadMore(pagination)}
   `;
 
-    modalRoot.innerHTML = renderModal(openAction, state);
+    renderModalRoot(openAction);
 
     bindEvents();
   }
+
+  // --- Modale : rendu, focus, clavier ----------------------------------
+  //
+  // render() reconstruit tout le HTML à chaque changement d'état. Pour la
+  // modale, cela ferait perdre à la fois les saisies (un échec d'envoi
+  // viderait le formulaire) et le focus clavier. On les capture donc avant
+  // le rendu et on les restaure après.
+
+  // Id de l'action dont le bouton « Soutenir » a ouvert la modale : le
+  // focus y revient à la fermeture (motif « dialog » d'ARIA, RGAA 12.8).
+  let modalTriggerId = null;
+  let modalWasOpen = false;
+  // Champ à focaliser au prochain rendu de la modale (premier champ en
+  // erreur après une tentative d'envoi), prioritaire sur le focus courant.
+  let pendingFocusId = "";
+  // Dernier message d'échec d'envoi déjà annoncé aux lecteurs d'écran.
+  let announcedError = "";
+
+  function renderModalRoot(openAction) {
+    const oldForm = document.getElementById("lcse-support-form");
+    const values = oldForm ? Object.fromEntries(new FormData(oldForm)) : null;
+    const focused = modalRoot.contains(document.activeElement) ? document.activeElement.id : "";
+
+    modalRoot.innerHTML = renderModal(openAction, state);
+
+    const open = !!openAction;
+    // Le reste de la page devient inerte derrière la modale : ni clic, ni
+    // tabulation, ni lecture par les lecteurs d'écran.
+    app.inert = open;
+    const header = document.querySelector(".lcse-header");
+    if (header) header.inert = open;
+
+    const newForm = document.getElementById("lcse-support-form");
+    if (newForm && values) {
+      for (const [name, value] of Object.entries(values)) {
+        const field = newForm.elements.namedItem(name);
+        if (field) field.value = value;
+      }
+    }
+
+    if (open) {
+      // À l'ouverture, ou quand l'élément qui avait le focus a disparu
+      // (passage au message de confirmation) : premier élément tabulable,
+      // le bouton de fermeture en pratique.
+      const wanted = pendingFocusId || focused;
+      pendingFocusId = "";
+      const target = (wanted && document.getElementById(wanted)) || focusableIn(modalRoot)[0];
+      if (target) target.focus();
+
+      // Alerte d'échec d'envoi : rendue masquée et vide, on n'y écrit le
+      // message qu'une fois la zone en place, pour qu'il soit annoncé.
+      // Un message déjà annoncé est réaffiché d'emblée lors des rendus
+      // suivants, sans être relu.
+      const alertEl = document.getElementById("lcse-submit-alert");
+      const message = state.submitError;
+      if (alertEl && message) {
+        const show = () => {
+          const text = document.getElementById("lcse-submit-alert-text");
+          if (!text || !alertEl.isConnected) return;
+          alertEl.hidden = false;
+          text.textContent = message;
+        };
+        if (message === announcedError) show();
+        else { announcedError = message; setTimeout(show, 100); }
+      }
+      if (!message) announcedError = "";
+    } else if (modalWasOpen) {
+      const trigger = app.querySelector(`[data-action="support"][data-id="${modalTriggerId}"]`);
+      // Si le bouton n'existe plus, on se rabat sur le titre de la page.
+      const fallback = app.querySelector("h1");
+      if (trigger) trigger.focus();
+      else if (fallback) { fallback.tabIndex = -1; fallback.focus(); }
+    }
+    modalWasOpen = open;
+  }
+
+  function focusableIn(root) {
+    return Array.from(root.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter((el) => el.offsetParent !== null || el === document.activeElement);
+  }
+
+  function openModal(actionId) {
+    modalTriggerId = actionId;
+    state.openActionId = actionId;
+    state.sent = false;
+    state.submitError = "";
+    state.fieldErrors = {};
+    render();
+  }
+
+  function closeModal() {
+    state.openActionId = null;
+    state.sent = false;
+    state.submitError = "";
+    state.fieldErrors = {};
+    render();
+  }
+
+  // Retire l'erreur d'un champ sans re-rendre la modale (ce qui déplacerait
+  // le curseur) : dès que la saisie devient valide, le message disparaît.
+  function clearFieldError(name) {
+    delete state.fieldErrors[name];
+    const field = document.getElementById(`f-${name}`);
+    if (!field) return;
+    const group = field.closest(".form-group");
+    if (group) group.classList.remove("has-error");
+    field.classList.remove("is-invalid");
+    field.removeAttribute("aria-invalid");
+    const errorEl = document.getElementById(`error-f-${name}`);
+    if (errorEl) errorEl.remove();
+    const rest = (field.getAttribute("aria-describedby") || "")
+      .split(" ").filter((id) => id && id !== `error-f-${name}`).join(" ");
+    if (rest) field.setAttribute("aria-describedby", rest);
+    else field.removeAttribute("aria-describedby");
+  }
+
+  // Écouteur unique (le document n'est jamais re-rendu) : Échap ferme la
+  // modale, Tab et Maj+Tab bouclent à l'intérieur.
+  document.addEventListener("keydown", (e) => {
+    if (state.openActionId === null) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeModal();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const items = focusableIn(modalRoot);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !modalRoot.contains(document.activeElement))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (document.activeElement === last || !modalRoot.contains(document.activeElement))) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
 
   // ---------------------------------------------------------------------
   // Événements
@@ -1705,28 +1927,28 @@ body {
     });
 
     app.querySelectorAll('[data-action="support"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        state.openActionId = Number(el.getAttribute("data-id"));
-        state.sent = false;
-        state.submitError = "";
-        render();
-      });
+      el.addEventListener("click", () => openModal(Number(el.getAttribute("data-id"))));
     });
 
     modalRoot.querySelectorAll('[data-action="close"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        state.openActionId = null;
-        state.sent = false;
-        state.submitError = "";
-        render();
-      });
+      el.addEventListener("click", closeModal);
     });
 
     const modalContent = modalRoot.querySelector(".modal-content");
     if (modalContent) modalContent.addEventListener("click", (e) => e.stopPropagation());
 
     const form = document.getElementById("lcse-support-form");
-    if (form) form.addEventListener("submit", onSubmitForm);
+    if (form) {
+      form.addEventListener("submit", onSubmitForm);
+      // On ne signale pas d'erreur pendant la frappe ; on retire seulement
+      // celles qui viennent d'être corrigées.
+      form.addEventListener("input", (e) => {
+        const name = e.target && e.target.name;
+        if (!name || !state.fieldErrors[name]) return;
+        const errors = validateSupportForm(Object.fromEntries(new FormData(form)));
+        if (!errors[name]) clearFieldError(name);
+      });
+    }
   }
 
   // Ne met à jour que la liste déroulante d'un combobox (pas tout `app`),
@@ -1752,14 +1974,27 @@ body {
 
   async function onSubmitForm(e) {
     e.preventDefault();
+    // Le bouton d'envoi reste focalisable pendant l'envoi (aria-disabled
+    // plutôt que disabled, qui lui ferait perdre le focus) : c'est ici
+    // qu'on bloque un second envoi.
+    if (state.submitting) return;
     const action = actions.find((a) => a.id === state.openActionId);
     if (!action) return;
 
     const data = new FormData(e.target);
-    const montantRaw = data.get("montant");
+    const errors = validateSupportForm(Object.fromEntries(data));
+    const firstInvalid = SUPPORT_FIELDS.find((name) => errors[name]);
+    state.fieldErrors = errors;
+    state.submitError = "";
+    if (firstInvalid) {
+      // Focus sur le premier champ en erreur : son message est lu avec
+      // lui (aria-describedby).
+      pendingFocusId = `f-${firstInvalid}`;
+      render();
+      return;
+    }
 
     state.submitting = true;
-    state.submitError = "";
     render();
 
     try {
@@ -1773,7 +2008,7 @@ body {
           Nom: String(data.get("nom") || "").trim(),
           Email: String(data.get("email") || "").trim(),
           Telephone: String(data.get("telephone") || "").trim(),
-          Montant: montantRaw ? Number(montantRaw) : null,
+          Montant: parseMontant(data.get("montant")),
           Message: String(data.get("message") || "").trim(),
           Date: Math.floor(Date.now() / 1000),
           Action_financee: action.id,

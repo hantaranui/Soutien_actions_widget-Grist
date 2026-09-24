@@ -104,10 +104,43 @@ describe("renderModal", () => {
     assert.ok(!html.includes('id="lcse-support-form"'));
   });
 
-  test("désactive le bouton d'envoi pendant la soumission", () => {
+  test("désactive le bouton d'envoi pendant la soumission, sans lui retirer le focus", () => {
     const html = R.renderModal(SAMPLE_ACTION, { sent: false, submitting: true, submitError: "" });
-    assert.match(html, /disabled/);
-    assert.match(html, /Envoi…/);
+    assert.match(html, /id="lcse-submit"[^>]*aria-disabled="true"/);
+    assert.ok(!/id="lcse-submit"[^>]* disabled/.test(html), "pas d'attribut disabled, qui ferait perdre le focus");
+    assert.match(html, /Envoi en cours<\/span><ft-spinner class="icon" label="Envoi en cours" size="xs">/);
+  });
+
+  test("dialogue accessible : rôle, aria-modal et titre relié", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { sent: false, submitting: false, submitError: "" });
+    assert.match(html, /role="dialog" aria-modal="true" aria-labelledby="lcse-modal-title"/);
+    assert.match(html, /<h2 class="modal-title" id="lcse-modal-title">Du stade vers l&#39;emploi<\/h2>/);
+  });
+
+  test("bouton de fermeture dans l'entête, sur le formulaire comme sur la confirmation", () => {
+    for (const sent of [false, true]) {
+      const html = R.renderModal(SAMPLE_ACTION, { sent, submitting: false, submitError: "" });
+      assert.match(html, /class="modal-header lcse-modal-header"[\s\S]*?id="lcse-modal-close"[^>]*data-action="close"/);
+      assert.match(html, /<span class="sr-only">Fermer la fenêtre<\/span>/);
+    }
+  });
+
+  test("champs obligatoires marqués de l'astérisque du Design System", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { sent: false, submitting: false, submitError: "" });
+    for (const id of ["f-prenom", "f-nom", "f-organisation", "f-email"]) {
+      assert.match(html, new RegExp(`for="${id}">[^<]*<span class="required">&nbsp;\\*</span>`));
+    }
+    for (const id of ["f-telephone", "f-montant", "f-message"]) {
+      const label = html.match(new RegExp(`<label class="form-label" for="${id}">.*?</label>`))[0];
+      assert.ok(!label.includes('class="required"'), `${id} est facultatif`);
+    }
+    assert.ok(!html.includes("(facultatif)"));
+  });
+
+  test("modale centrée, grand format", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { sent: false, submitting: false, submitError: "" });
+    assert.match(html, /class="modal lcse-modal show"/);
+    assert.match(html, /modal-dialog-centered[^"]*modal-lg/);
   });
 });
 
@@ -182,5 +215,67 @@ describe("renderCard sur une action déjà financée", () => {
     const html = R.renderCard({ ...SAMPLE_ACTION, financee: false });
     assert.match(html, /data-action="support"/);
     assert.ok(!html.includes("Financée à 100 %"));
+  });
+});
+
+describe("formulaire de soutien : erreurs et aides", () => {
+  const OPEN = { sent: false, submitting: false, submitError: "" };
+
+  test("validation confiée au widget (novalidate), required conservé", () => {
+    const html = R.renderModal(SAMPLE_ACTION, OPEN);
+    assert.match(html, /<form id="lcse-support-form" novalidate>/);
+    assert.match(html, /id="f-email"[^>]* required/);
+  });
+
+  test("sans erreur : aucun marquage d'erreur", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { ...OPEN, fieldErrors: {} });
+    assert.ok(!html.includes("has-error"));
+    assert.ok(!html.includes("aria-invalid"));
+  });
+
+  test("champ en erreur : motif Input · Erreur du Design System", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { ...OPEN, fieldErrors: { nom: "Renseignez votre nom." } });
+    assert.match(html, /class="form-group has-error">\s*<label class="form-label" for="f-nom">/);
+    assert.match(html, /id="f-nom"[^>]*class="form-control is-invalid"[^>]*aria-describedby="error-f-nom"[^>]*aria-invalid="true"/);
+    assert.match(html, /<p class="help-block invalid-feedback" id="error-f-nom"><span class="sr-only">Erreur&nbsp;:&nbsp;<\/span>Renseignez votre nom\.<\/p>/);
+  });
+
+  test("champ avec aide et erreur : les deux sont reliés, l'erreur d'abord", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { ...OPEN, fieldErrors: { email: "Adresse invalide." } });
+    assert.match(html, /id="f-email"[^>]*aria-describedby="error-f-email help-f-email"/);
+    assert.match(html, /<p class="help-block" id="help-f-email">Exemple : nom@organisation\.fr<\/p>/);
+  });
+
+  test("le message d'erreur est échappé", () => {
+    const html = R.renderModal(SAMPLE_ACTION, { ...OPEN, fieldErrors: { nom: "<b>x</b>" } });
+    assert.match(html, /&lt;b&gt;x&lt;\/b&gt;/);
+  });
+
+  test("aides à la saisie à la place des placeholders", () => {
+    const html = R.renderModal(SAMPLE_ACTION, OPEN);
+    assert.ok(!html.includes("placeholder="));
+    assert.match(html, /id="f-telephone"[^>]*aria-describedby="help-f-telephone"/);
+    assert.match(html, /id="f-message"[^>]*aria-describedby="help-f-message"/);
+  });
+
+  test("montant : champ numérique texte avec l'unité accolée (Input · Append)", () => {
+    const html = R.renderModal(SAMPLE_ACTION, OPEN);
+    assert.match(html, /for="f-montant">Montant envisagé<span class="sr-only">&nbsp;en euros<\/span><\/label>/);
+    assert.match(html, /id="f-montant"[^>]*type="text" inputmode="numeric"/);
+    assert.match(html, /<div class="input-group-append" aria-hidden="true"><span class="input-group-text">€<\/span><\/div>/);
+    assert.ok(!html.includes('type="number"'));
+  });
+
+  test("alerte d'échec d'envoi toujours présente, masquée et vide (remplie par main.js)", () => {
+    for (const submitError of ["", "L'envoi a échoué."]) {
+      const html = R.renderModal(SAMPLE_ACTION, { ...OPEN, submitError });
+      assert.match(html, /id="lcse-submit-alert" role="alert" hidden>/);
+      assert.match(html, /<p class="alert-content" id="lcse-submit-alert-text"><\/p>/);
+    }
+  });
+
+  test("les champs rendus suivent l'ordre de validation", () => {
+    const L = require("../src/logic.js");
+    assert.deepEqual(R.SUPPORT_FORM_FIELDS.map((f) => f.name), L.SUPPORT_FIELDS);
   });
 });
