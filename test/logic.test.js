@@ -474,6 +474,10 @@ describe("TABS", () => {
     assert.equal(LCSE.TABS[1].key, LCSE.TAB_FUNDED);
     assert.equal(LCSE.TABS[1].label, "Actions déjà financées");
   });
+
+  test("libellés courts pour petit écran", () => {
+    assert.deepEqual(LCSE.TABS.map((t) => t.shortLabel), ["À soutenir", "Déjà financées"]);
+  });
 });
 
 describe("sortByDateAsc", () => {

@@ -164,35 +164,67 @@ describe("renderLoadMore", () => {
 
 describe("renderTabs", () => {
   const TABS = [
-    { key: "a-soutenir", label: "Actions à soutenir" },
-    { key: "financees", label: "Actions déjà financées" },
+    { key: "a-soutenir", label: "Actions à soutenir", shortLabel: "À soutenir" },
+    { key: "financees", label: "Actions déjà financées", shortLabel: "Déjà financées" },
   ];
   const counts = { "a-soutenir": 55, financees: 12 };
 
   test("affiche les deux onglets avec leur nombre d'actions", () => {
     const html = R.renderTabs(TABS, "a-soutenir", counts);
-    assert.match(html, /Actions à soutenir \(55\)/);
-    assert.match(html, /Actions déjà financées \(12\)/);
-    assert.match(html, /role="tablist"/);
+    assert.match(html, /Actions à soutenir<\/span><span class="lcse-tab-label-short">À soutenir<\/span>&nbsp;\(55\)/);
+    assert.match(html, /Actions déjà financées<\/span><span class="lcse-tab-label-short">Déjà financées<\/span>&nbsp;\(12\)/);
   });
 
-  test("marque l'onglet actif, et lui seul", () => {
+  test("sans libellé court : libellé complet seul", () => {
+    const html = R.renderTabs([{ key: "x", label: "Tout" }], "x", { x: 2 });
+    assert.match(html, /<span class="nav-link-text">Tout&nbsp;\(2\)<\/span>/);
+    assert.ok(!html.includes("lcse-tab-label-short"));
+  });
+
+  test("balisage de l'exemple Tabs · Défaut du Design System", () => {
     const html = R.renderTabs(TABS, "a-soutenir", counts);
-    // aria-current déclenche l'apparence active du Design System.
-    assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
-    assert.match(html, /data-tab="a-soutenir"[\s\S]*?aria-selected="true"/);
-    assert.match(html, /data-tab="financees"[\s\S]*?aria-selected="false"/);
+    assert.match(html, /<nav role="presentation" class="lcse-tabs">\s*<ul class="nav nav-tabs">/);
+    assert.match(html, /<li class="nav-item">\s*<button type="button" id="lcse-tab-a-soutenir" class="nav-link active"/);
+  });
+
+  test("pas de motif ARIA tab/tablist, qui exigerait la navigation aux flèches", () => {
+    const html = R.renderTabs(TABS, "a-soutenir", counts);
+    assert.ok(!/role="tab(list)?"/.test(html));
+    assert.ok(!html.includes("aria-selected"));
+    assert.ok(!html.includes('role="presentation"><button'));
+  });
+
+  test("marque l'onglet actif, et lui seul (.active + aria-current=\"true\")", () => {
+    const html = R.renderTabs(TABS, "a-soutenir", counts);
+    assert.equal((html.match(/aria-current="true"/g) || []).length, 1);
+    assert.equal((html.match(/nav-link active/g) || []).length, 1);
+    assert.match(html, /class="nav-link active" data-tab="a-soutenir" aria-current="true"/);
+    assert.match(html, /class="nav-link" data-tab="financees">/);
+    assert.ok(!html.includes('aria-current="page"'));
   });
 
   test("l'onglet actif suit le paramètre", () => {
     const html = R.renderTabs(TABS, "financees", counts);
-    assert.match(html, /data-tab="financees"[\s\S]*?aria-selected="true"[\s\S]*?aria-current="page"/);
-    assert.match(html, /data-tab="a-soutenir"[\s\S]*?aria-selected="false"/);
+    assert.match(html, /class="nav-link active" data-tab="financees" aria-current="true"/);
+    assert.match(html, /class="nav-link" data-tab="a-soutenir">/);
   });
 
   test("un onglet vide affiche (0), pas une valeur absente", () => {
     const html = R.renderTabs(TABS, "a-soutenir", { "a-soutenir": 3 });
-    assert.match(html, /Actions déjà financées \(0\)/);
+    assert.match(html, /Déjà financées<\/span>&nbsp;\(0\)/);
+  });
+});
+
+describe("renderTabPane", () => {
+  test("contenu dans .tab-content > .tab-pane.active", () => {
+    const html = R.renderTabPane("financees", "<p>liste</p>");
+    assert.match(html, /<div class="tab-content lcse-tab-content">\s*<div class="tab-pane active" id="lcse-tab-financees-content">\s*<p>liste<\/p>/);
+  });
+
+  test("se termine par le lien d'évitement vers l'onglet actif", () => {
+    const html = R.renderTabPane("financees", "");
+    assert.match(html, /<a href="#lcse-tab-financees" class="skip-link sr-only sr-only-focusable" data-action="back-to-tab">Retour à l'onglet actif<\/a>/);
+    assert.equal(R.tabButtonId("financees"), "lcse-tab-financees");
   });
 });
 

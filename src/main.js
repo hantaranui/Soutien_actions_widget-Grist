@@ -17,8 +17,8 @@
     validateSupportForm,
   } = window.LCSE;
   const {
-    renderEmptyState, renderCard, renderTabs, renderLoadMore, renderCombo,
-    comboOptionsHtml, renderModal,
+    renderEmptyState, renderCard, renderTabs, renderTabPane, tabButtonId,
+    renderLoadMore, renderCombo, comboOptionsHtml, renderModal,
   } = window.LCSE;
 
   // --- Accès aux pièces jointes (logos) ---------------------------------
@@ -183,17 +183,28 @@
     </section>
 
     ${renderTabs(TABS, state.tab, counts)}
-
-    <p class="lcse-count">${countLabel}</p>
-
-    ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
-    ${renderLoadMore(pagination)}
+    ${renderTabPane(state.tab, `
+      <p class="lcse-count">${countLabel}</p>
+      ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
+      ${renderLoadMore(pagination)}
+    `)}
   `;
 
     renderModalRoot(openAction);
 
     bindEvents();
+
+    // render() recrée tous les boutons : sans cela, cliquer un onglet au
+    // clavier renverrait le focus en haut du document (RGAA 12.8).
+    if (pendingAppFocusId) {
+      const el = document.getElementById(pendingAppFocusId);
+      pendingAppFocusId = "";
+      if (el) el.focus();
+    }
   }
+
+  // Élément de la page (hors modale) à refocaliser après le prochain rendu.
+  let pendingAppFocusId = "";
 
   // --- Modale : rendu, focus, clavier ----------------------------------
   //
@@ -410,6 +421,7 @@
         const tab = el.getAttribute("data-tab");
         if (tab === state.tab) return;
         state.tab = tab;
+        pendingAppFocusId = tabButtonId(tab);
         // La pagination repart du premier lot : l'autre onglet n'a rien à
         // voir avec ce qui était déroulé ici.
         state.visibleCount = PAGE_SIZE;
@@ -417,6 +429,16 @@
         // les compteurs des deux onglets sur un même périmètre.
         FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
         render();
+      });
+    });
+
+    // Lien d'évitement en fin de liste : un lien vers un bouton ne lui
+    // donne pas le focus dans tous les navigateurs, on le fait nous-mêmes.
+    app.querySelectorAll('[data-action="back-to-tab"]').forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        const tabButton = document.getElementById(tabButtonId(state.tab));
+        if (tabButton) tabButton.focus();
       });
     });
 

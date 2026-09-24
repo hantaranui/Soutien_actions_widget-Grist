@@ -34,9 +34,11 @@
   // ce qui a abouti, sans polluer la liste utile.
   const TAB_OPEN = "a-soutenir";
   const TAB_FUNDED = "financees";
+  // shortLabel : libellé affiché sur petit écran, où les deux libellés
+  // complets ne tiennent pas côte à côte (le second onglet serait coupé).
   const TABS = [
-    { key: TAB_OPEN, label: "Actions à soutenir" },
-    { key: TAB_FUNDED, label: "Actions déjà financées" },
+    { key: TAB_OPEN, label: "Actions à soutenir", shortLabel: "À soutenir" },
+    { key: TAB_FUNDED, label: "Actions déjà financées", shortLabel: "Déjà financées" },
   ];
 
   // Nombre d'actions affichées d'emblée, et taille de chaque lot ajouté

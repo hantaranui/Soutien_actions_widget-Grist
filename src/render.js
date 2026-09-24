@@ -80,18 +80,24 @@
     </article>`;
   }
 
+  // Id du bouton d'un onglet : sert au retour du focus après un rendu et
+  // au lien d'évitement « Retour à l'onglet actif ».
+  function tabButtonId(key) {
+    return `lcse-tab-${key}`;
+  }
+
   /**
    * Les deux onglets, avec le nombre d'actions que chacun contient sous
    * les filtres courants — pour qu'on sache ce qu'on trouvera en face
    * avant de cliquer.
    *
-   * Classes du Design System France Travail (.nav-tabs/.nav-item/.nav-link),
-   * dont l'état actif s'accroche à [aria-current=page]. On garde en plus le
-   * couple role="tab"/aria-selected, sémantiquement correct pour des
-   * onglets qui filtrent une liste en place sans navigation : aria-current
-   * ne sert ici qu'à déclencher l'apparence du Design System.
+   * Balisage de l'exemple de code « Tabs · Défaut » du Design System :
+   * une simple liste de boutons dans <nav role="presentation">, onglet
+   * courant en .active + aria-current="true". Pas de role="tab" : ce motif
+   * ARIA impose une navigation aux flèches que le DS ne prévoit pas, et le
+   * déclarer sans elle trompe les lecteurs d'écran (RGAA 7.1).
    *
-   * @param {Array<{key:string,label:string}>} tabs
+   * @param {Array<{key:string,label:string,shortLabel?:string}>} tabs
    * @param {string} activeKey
    * @param {Object<string,number>} counts nombre d'actions par clé d'onglet.
    */
@@ -100,21 +106,43 @@
       const active = t.key === activeKey;
       const n = counts[t.key] || 0;
       return `
-        <li class="nav-item" role="presentation">
-          <button
-            type="button"
-            class="nav-link"
-            role="tab"
-            data-tab="${escapeHtml(t.key)}"
-            aria-selected="${active ? "true" : "false"}"
-            ${active ? 'aria-current="page"' : ""}
-          >
-            <span class="nav-link-text">${escapeHtml(t.label)} (${n})</span>
+        <li class="nav-item">
+          <button type="button" id="${tabButtonId(escapeHtml(t.key))}" class="nav-link${active ? " active" : ""}" data-tab="${escapeHtml(t.key)}"${active ? ' aria-current="true"' : ""}>
+            <span class="nav-link-text">${t.shortLabel
+              // Un seul des deux libellés est affiché (display), donc lu.
+              ? `<span class="lcse-tab-label-long">${escapeHtml(t.label)}</span><span class="lcse-tab-label-short">${escapeHtml(t.shortLabel)}</span>`
+              : escapeHtml(t.label)}&nbsp;(${n})</span>
           </button>
         </li>`;
     }).join("");
 
-    return `<ul class="nav-tabs lcse-tabs" role="tablist">${items}</ul>`;
+    return `
+    <nav role="presentation" class="lcse-tabs">
+      <ul class="nav nav-tabs">${items}
+      </ul>
+    </nav>`;
+  }
+
+  /**
+   * Panneau de l'onglet actif (.tab-content > .tab-pane.active du DS). Un
+   * seul panneau : son contenu est recalculé à chaque changement d'onglet.
+   * Il se termine par le lien d'évitement de l'exemple de code du DS, qui
+   * ramène le clavier à l'onglet actif après une longue liste.
+   *
+   * @param {string} activeKey
+   * @param {string} contentHtml
+   */
+  function renderTabPane(activeKey, contentHtml) {
+    const key = escapeHtml(activeKey);
+    return `
+    <div class="tab-content lcse-tab-content">
+      <div class="tab-pane active" id="lcse-tab-${key}-content">
+        ${contentHtml}
+        <div class="position-relative">
+          <a href="#${tabButtonId(key)}" class="skip-link sr-only sr-only-focusable" data-action="back-to-tab">Retour à l'onglet actif</a>
+        </div>
+      </div>
+    </div>`;
   }
 
   /**
@@ -318,6 +346,8 @@
     renderEmptyState,
     renderCard,
     renderTabs,
+    renderTabPane,
+    tabButtonId,
     renderLoadMore,
     renderCombo,
     comboOptionsHtml,
