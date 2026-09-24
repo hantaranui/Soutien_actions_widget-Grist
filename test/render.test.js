@@ -59,29 +59,77 @@ describe("renderCard", () => {
   });
 });
 
-describe("comboOptionsHtml", () => {
-  const options = ["Toutes", "Nouvelle-Aquitaine", "Occitanie"];
+describe("renderFilters", () => {
+  const FILTERS = [
+    { key: "region", label: "Région" },
+    { key: "club", label: "Club", search: true },
+  ];
+  const values = { region: "Occitanie", club: "Toutes" };
+  const options = { region: ["Toutes", "Nouvelle-Aquitaine", "Occitanie"] };
 
-  test("liste toutes les options quand la requête est vide", () => {
-    const html = R.comboOptionsHtml(options, "", "Toutes");
-    assert.match(html, /Nouvelle-Aquitaine/);
-    assert.match(html, /Occitanie/);
+  test("bloc repliable du Design System, variante Filtre", () => {
+    const html = R.renderFilters(FILTERS, values, 1, true, options);
+    assert.match(html, /<div class="ds-collapse ds-collapse-sm ds-collapse-filter lcse-filters">/);
+    assert.match(html, /<h2 class="lcse-filters-heading">\s*<button class="ds-collapse-trigger is-rotating" data-ft-collapse="lcse-filters-panel"/);
+    assert.match(html, /<span aria-hidden="true" class="icon icon-chevron-sm-d"><\/span>/);
   });
 
-  test("filtre selon la requête tapée", () => {
-    const html = R.comboOptionsHtml(options, "occ", "Toutes");
-    assert.match(html, /Occitanie/);
-    assert.ok(!html.includes("Nouvelle-Aquitaine"));
+  test("ouvert : conteneur .open, contenu visible ; fermé : contenu hidden", () => {
+    const open = R.renderFilters(FILTERS, values, 0, true, options);
+    assert.match(open, /<div id="lcse-filters-panel" class="open">\s*<div class="ds-collapse-content">/);
+    const closed = R.renderFilters(FILTERS, values, 0, false, options);
+    assert.match(closed, /<div id="lcse-filters-panel">\s*<div class="ds-collapse-content" hidden>/);
   });
 
-  test("affiche 'Aucun résultat' quand rien ne correspond", () => {
-    const html = R.comboOptionsHtml(options, "zzz", "Toutes");
-    assert.match(html, /Aucun résultat/);
+  test("liste courte : Select du Design System, valeur retenue sélectionnée", () => {
+    const html = R.renderFilters(FILTERS, values, 0, true, options);
+    assert.match(html, /<label class="form-label" for="lcse-filter-region">Région<\/label>\s*<select class="form-control" data-filter="region" id="lcse-filter-region" name="region">/);
+    assert.match(html, /<option value="Occitanie" selected>Occitanie<\/option>/);
+    assert.match(html, /<option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine<\/option>/);
+    assert.ok(!html.includes('data-filter="region" id="lcse-filter-region" placeholder'));
   });
 
-  test("marque l'option retenue avec is-selected", () => {
-    const html = R.comboOptionsHtml(options, "", "Occitanie");
-    assert.match(html, /class="lcse-combo-option is-selected">Occitanie</);
+  test("filtre avec recherche (club) : Autocomplete du Design System", () => {
+    const html = R.renderFilters(FILTERS, values, 0, true, options);
+    assert.match(html, /<div class="autocomplete">\s*<label class="form-label" for="lcse-filter-club">Club<\/label>\s*<div class="form-control-wrapper">/);
+    assert.match(html, /<input class="form-control autocomplete-input" data-autocomplete="true" data-filter="club" id="lcse-filter-club"[^>]*value="Toutes">/);
+    assert.match(html, /<ft-autocomplete input-id="lcse-filter-club" label-property="name"><\/ft-autocomplete>/);
+  });
+
+  test("réinitialisation : bouton à l'apparence de lien du DS", () => {
+    const html = R.renderFilters(FILTERS, values, 0, true, options);
+    assert.match(html, /<button type="button" class="btn btn-reset text-link" data-action="reset">Réinitialiser les filtres<\/button>/);
+  });
+
+  test("valeurs échappées", () => {
+    const html = R.renderFilters(FILTERS, { region: "Toutes", club: '"><b>' }, 0, true, options);
+    assert.match(html, /value="&quot;&gt;&lt;b&gt;"/);
+  });
+});
+
+describe("renderFilterOptions", () => {
+  test("une option par valeur, la valeur retenue sélectionnée", () => {
+    assert.equal(R.renderFilterOptions(["Toutes", "A"], "A"), '<option value="Toutes">Toutes</option><option value="A" selected>A</option>');
+  });
+  test("valeur retenue absente des options : ajoutée en tête", () => {
+    assert.match(R.renderFilterOptions(["Toutes", "A"], "B"), /^<option value="B" selected>B<\/option><option value="Toutes">/);
+  });
+  test("échappe les valeurs", () => {
+    assert.match(R.renderFilterOptions(["<x>"], "<x>"), /<option value="&lt;x&gt;" selected>&lt;x&gt;<\/option>/);
+  });
+});
+
+describe("renderFilterBadge", () => {
+  test("rien sans filtre actif", () => {
+    assert.equal(R.renderFilterBadge(0), "");
+  });
+  test("nombre de filtres actifs, au singulier ou au pluriel pour les lecteurs d'écran", () => {
+    assert.equal(R.renderFilterBadge(1), '<span class="badge badge-neutral">1<span class="sr-only">&nbsp;filtre actif</span></span>');
+    assert.match(R.renderFilterBadge(3), /3<span class="sr-only">&nbsp;filtres actifs<\/span>/);
+  });
+  test("placée dans le déclencheur du bloc", () => {
+    const html = R.renderFilters([{ key: "region", label: "Région" }], { region: "Occitanie" }, 1, true);
+    assert.match(html, /<span class="ds-collapse-trigger-content-append" id="lcse-filters-count"><span class="badge badge-neutral">1/);
   });
 });
 

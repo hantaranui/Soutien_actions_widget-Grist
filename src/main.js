@@ -11,14 +11,15 @@
   "use strict";
 
   const {
-    ALL, TABLES, FILTER_KEYS, PAGE_SIZE, TABS, TAB_OPEN,
-    getFilterOptions, filterOptionsByQuery, buildActions, paginate,
-    actionsForTab, countLabelFor, SUPPORT_FIELDS, parseMontant,
-    validateSupportForm,
+    ALL, TABLES, PAGE_SIZE, TABS, TAB_OPEN,
+    getFilterOptions, buildActions, paginate, actionsForTab, countLabelFor,
+    SUPPORT_FIELDS, parseMontant, validateSupportForm, FILTERS,
+    filterSuggestions, activeFilterCount,
   } = window.LCSE;
   const {
     renderEmptyState, renderCard, renderTabs, renderTabPane, tabButtonId,
-    renderLoadMore, renderCombo, comboOptionsHtml, renderModal,
+    renderLoadMore, renderFilters, renderFilterBadge, renderFilterOptions,
+    renderModal,
   } = window.LCSE;
 
   // --- Accès aux pièces jointes (logos) ---------------------------------
@@ -59,18 +60,10 @@
     fieldErrors: {},
     // Filtres repliés d'emblée sur petit écran (ils y prennent toute la
     // hauteur visible), dépliés sur grand écran où la place ne manque pas.
+    // État initial seulement : ensuite, c'est la directive de repli du
+    // Design System qui ouvre et ferme le bloc.
     filtersOpen: !(typeof window !== "undefined" && window.matchMedia
       && window.matchMedia("(max-width: 680px)").matches),
-  };
-
-  // État transitoire des combobox de recherche des filtres (texte tapé,
-  // liste ouverte/fermée) — distinct de `state`, qui ne garde que la valeur
-  // retenue pour chaque filtre.
-  const combo = {
-    region: { open: false, query: "" },
-    dept: { open: false, query: "" },
-    fede: { open: false, query: "" },
-    club: { open: false, query: "" },
   };
 
   let actions = []; // liste jointe et prête à l'affichage
@@ -118,8 +111,12 @@
   // Rendu
   // ---------------------------------------------------------------------
 
+  // Le titre et les filtres sont-ils déjà dans la page ? (voir render)
+  let shellRendered = false;
+
   function render() {
     if (loadError) {
+      shellRendered = false;
       app.innerHTML = `
       <div class="alert alert-error" role="alert">
         <div class="alert-body">
@@ -150,45 +147,36 @@
 
     const list = actionsForTab(filtered, state.tab);
 
-    // Les options des filtres ne listent que les valeurs présentes dans
-    // l'onglet courant : proposer un club dont toutes les actions sont
-    // dans l'autre onglet mènerait à une liste vide.
-    const options = getFilterOptions(actionsForTab(actions, state.tab), state);
     const pagination = paginate(list, state.visibleCount, PAGE_SIZE);
 
     const countLabel = countLabelFor(state.tab, list.length);
 
     const openAction = actions.find((a) => a.id === state.openActionId) || null;
 
-    app.innerHTML = `
+    // Le titre et les filtres ne sont dessinés qu'une fois : les champs de
+    // filtre (webcomponents Autocomplete) et le bloc repliable gardent ainsi
+    // leur état et le focus. Seule la liste (onglets + panneau) est
+    // redessinée à chaque changement.
+    if (!shellRendered) {
+      app.innerHTML = `
     <div class="lcse-title-row">
       <div class="lcse-title-bar"></div>
       <h1 class="lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
     </div>
+    ${renderFilters(FILTERS, state, activeFilterCount(state), state.filtersOpen, allFilterOptions())}
+    <div id="lcse-results"></div>`;
+      bindFilterEvents();
+      shellRendered = true;
+    }
+    syncFilters();
 
-    <section class="lcse-filters">
-      <div class="lcse-filters-head">
-        <button type="button" class="lcse-filters-toggle" data-action="toggle-filters" aria-expanded="${state.filtersOpen ? "true" : "false"}">
-          <span class="lcse-filters-toggle-chevron ${state.filtersOpen ? "is-open" : ""}" aria-hidden="true"></span>
-          <h2 class="lcse-filters-title">Filtres</h2>
-        </button>
-        <button type="button" class="lcse-reset-btn" data-action="reset">Réinitialiser</button>
-      </div>
-      <div class="lcse-filters-grid ${state.filtersOpen ? "" : "lcse-hidden"}">
-        ${renderCombo("region", "Région", options.region, state.region, combo.region)}
-        ${renderCombo("dept", "Département", options.dept, state.dept, combo.dept)}
-        ${renderCombo("fede", "Fédération", options.fede, state.fede, combo.fede)}
-        ${renderCombo("club", "Club", options.club, state.club, combo.club)}
-      </div>
-    </section>
-
+    document.getElementById("lcse-results").innerHTML = `
     ${renderTabs(TABS, state.tab, counts)}
     ${renderTabPane(state.tab, `
       <p class="lcse-count">${countLabel}</p>
       ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
       ${renderLoadMore(pagination)}
-    `)}
-  `;
+    `)}`;
 
     renderModalRoot(openAction);
 
@@ -350,72 +338,6 @@
   // ---------------------------------------------------------------------
 
   function bindEvents() {
-    app.querySelectorAll("[data-filter]").forEach((el) => {
-      const key = el.getAttribute("data-filter");
-
-      el.addEventListener("focus", () => {
-        combo[key].open = true;
-        combo[key].query = "";
-        el.select();
-        updateComboList(key);
-      });
-
-      el.addEventListener("input", () => {
-        combo[key].query = el.value;
-        updateComboList(key);
-      });
-
-      el.addEventListener("blur", () => {
-        setTimeout(() => {
-          combo[key].open = false;
-          combo[key].query = "";
-          render();
-        }, 100);
-      });
-
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          combo[key].open = false;
-          combo[key].query = "";
-          el.blur();
-        } else if (e.key === "Enter") {
-          e.preventDefault();
-          const options = getFilterOptions(actions, state)[key];
-          const [first] = filterOptionsByQuery(options, combo[key].query);
-          if (first !== undefined) selectFilterValue(key, first);
-        }
-      });
-    });
-
-    app.querySelectorAll("[data-combo-list]").forEach((listEl) => {
-      const key = listEl.getAttribute("data-combo-list");
-      // Empêche l'input de perdre le focus (et donc la liste de se fermer)
-      // avant que le clic sur une option n'ait pu être traité.
-      listEl.addEventListener("mousedown", (e) => e.preventDefault());
-      listEl.addEventListener("click", (e) => {
-        const li = e.target.closest("[data-value]");
-        if (!li) return;
-        selectFilterValue(key, li.getAttribute("data-value"));
-      });
-    });
-
-    app.querySelectorAll('[data-action="reset"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
-        state.visibleCount = PAGE_SIZE;
-        // L'onglet n'est pas un filtre : "Réinitialiser" ne le change pas.
-        FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
-        render();
-      });
-    });
-
-    app.querySelectorAll('[data-action="toggle-filters"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        state.filtersOpen = !state.filtersOpen;
-        render();
-      });
-    });
-
     app.querySelectorAll("[data-tab]").forEach((el) => {
       el.addEventListener("click", () => {
         const tab = el.getAttribute("data-tab");
@@ -427,7 +349,6 @@
         state.visibleCount = PAGE_SIZE;
         // Les filtres sont conservés : c'est justement l'intérêt de voir
         // les compteurs des deux onglets sur un même périmètre.
-        FILTER_KEYS.forEach((key) => { combo[key].open = false; combo[key].query = ""; });
         render();
       });
     });
@@ -478,25 +399,104 @@
     }
   }
 
-  // Ne met à jour que la liste déroulante d'un combobox (pas tout `app`),
-  // pour ne pas faire perdre le focus/curseur de l'input pendant la frappe.
-  function updateComboList(key) {
-    const listEl = app.querySelector(`[data-combo-list="${key}"]`);
-    const inputEl = document.getElementById(`lcse-filter-${key}`);
-    if (!listEl || !inputEl) return;
-    const options = getFilterOptions(actions, state)[key];
-    listEl.innerHTML = comboOptionsHtml(options, combo[key].query, state[key]);
-    listEl.classList.toggle("lcse-hidden", !combo[key].open);
-    inputEl.setAttribute("aria-expanded", combo[key].open ? "true" : "false");
+  // --- Filtres ----------------------------------------------------------
+
+  // Options d'un filtre. Elles ne listent que les valeurs présentes dans
+  // l'onglet courant : proposer un club dont toutes les actions sont dans
+  // l'autre onglet mènerait à une liste vide.
+  function allFilterOptions() {
+    return getFilterOptions(actionsForTab(actions, state.tab), state);
+  }
+
+  function filterOptions(key) {
+    return allFilterOptions()[key] || [];
+  }
+
+  // Remet chaque filtre sur sa valeur retenue (après un choix, une
+  // réinitialisation, ou le département remis à « Tous » par un changement
+  // de région) et met à jour la pastille du nombre de filtres actifs. Les
+  // listes déroulantes reçoivent aussi leurs options, qui dépendent de
+  // l'onglet et de la région. Le champ de recherche où l'on est en train
+  // de taper n'est pas touché.
+  function syncFilters() {
+    const options = allFilterOptions();
+    for (const f of FILTERS) {
+      const field = document.getElementById(`lcse-filter-${f.key}`);
+      if (!field) continue;
+      if (!f.search) {
+        field.innerHTML = renderFilterOptions(options[f.key] || [], state[f.key]);
+        field.value = state[f.key];
+      } else if (field !== document.activeElement && field.value !== state[f.key]) {
+        field.value = state[f.key];
+      }
+    }
+    const badge = document.getElementById("lcse-filters-count");
+    if (badge) badge.innerHTML = renderFilterBadge(activeFilterCount(state));
   }
 
   function selectFilterValue(key, value) {
+    if (state[key] === value) return;
     state[key] = value;
     if (key === "region") state.dept = ALL;
     state.visibleCount = PAGE_SIZE;
-    combo[key].open = false;
-    combo[key].query = "";
     render();
+  }
+
+  // Événements des filtres, posés une seule fois (les filtres ne sont pas
+  // redessinés).
+  function bindFilterEvents() {
+    app.querySelectorAll("ft-autocomplete").forEach((el) => {
+      const input = document.getElementById(el.getAttribute("input-id"));
+      const key = input && input.dataset.filter;
+      if (!key) return;
+      // Propriété posée avant même que le webcomponent soit chargé : elle
+      // prime sur la méthode par défaut du composant.
+      el.searchCallback = (text) => {
+        const found = filterSuggestions(filterOptions(key), text, state[key]);
+        return found.length ? found.map((name) => ({ name })) : ["empty"];
+      };
+    });
+
+    app.addEventListener("ft-autocomplete-change", (e) => {
+      const input = document.getElementById(e.target.getAttribute("input-id"));
+      const key = input && input.dataset.filter;
+      if (key && e.detail && e.detail.name) selectFilterValue(key, e.detail.name);
+    });
+
+    // Listes déroulantes : le choix s'applique dès qu'il change.
+    app.addEventListener("change", (e) => {
+      const el = e.target;
+      if (el && el.tagName === "SELECT" && el.dataset.filter) selectFilterValue(el.dataset.filter, el.value);
+    });
+
+    // Champ de recherche, en le quittant : vidé, il revient à « Toutes » (le bouton
+    // d'effacement du composant sert à cela) ; laissé sur une saisie
+    // partielle, il réaffiche la valeur retenue.
+    app.addEventListener("focusout", (e) => {
+      const input = e.target;
+      const key = input && input.tagName === "INPUT" && input.dataset.filter;
+      if (!key) return;
+      setTimeout(() => {
+        if (document.activeElement === input) return;
+        if (!input.value.trim()) selectFilterValue(key, ALL);
+        else if (input.value !== state[key]) input.value = state[key];
+      }, 150);
+    });
+
+    app.querySelectorAll('[data-action="reset"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        state.region = ALL; state.dept = ALL; state.fede = ALL; state.club = ALL;
+        state.visibleCount = PAGE_SIZE;
+        // syncFilters épargne le champ de recherche qui a le focus : on le
+        // vide ici explicitement, la réinitialisation vaut pour tous.
+        FILTERS.filter((f) => f.search).forEach((f) => {
+          const input = document.getElementById(`lcse-filter-${f.key}`);
+          if (input) input.value = ALL;
+        });
+        // L'onglet n'est pas un filtre : "Réinitialiser" ne le change pas.
+        render();
+      });
+    });
   }
 
   async function onSubmitForm(e) {

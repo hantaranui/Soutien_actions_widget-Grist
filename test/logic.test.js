@@ -576,3 +576,41 @@ describe("parseMontant", () => {
     assert.ok(Number.isNaN(LCSE.parseMontant("abc")));
   });
 });
+
+describe("filterSuggestions", () => {
+  const options = ["Toutes", "Nouvelle-Aquitaine", "Occitanie"];
+
+  test("champ vide : toute la liste", () => {
+    assert.deepEqual(LCSE.filterSuggestions(options, "", "Toutes"), options);
+  });
+
+  test("champ qui affiche encore la valeur retenue : toute la liste", () => {
+    assert.deepEqual(LCSE.filterSuggestions(options, "Occitanie", "Occitanie"), options);
+  });
+
+  test("saisie : filtre sans tenir compte de la casse", () => {
+    assert.deepEqual(LCSE.filterSuggestions(options, "occ", "Toutes"), ["Occitanie"]);
+  });
+
+  test("rien ne correspond : liste vide", () => {
+    assert.deepEqual(LCSE.filterSuggestions(options, "zzz", "Toutes"), []);
+  });
+});
+
+describe("activeFilterCount", () => {
+  test("compte les filtres différents de « Toutes »", () => {
+    const ALL = LCSE.ALL;
+    assert.equal(LCSE.activeFilterCount({ region: ALL, dept: ALL, fede: ALL, club: ALL }), 0);
+    assert.equal(LCSE.activeFilterCount({ region: "Occitanie", dept: ALL, fede: "FF Rugby", club: ALL }), 2);
+  });
+});
+
+describe("FILTERS", () => {
+  test("un libellé par clé de filtre, dans le même ordre", () => {
+    assert.deepEqual(LCSE.FILTERS.map((f) => f.key), LCSE.FILTER_KEYS);
+  });
+
+  test("recherche à la frappe réservée au club", () => {
+    assert.deepEqual(LCSE.FILTERS.filter((f) => f.search).map((f) => f.key), ["club"]);
+  });
+});

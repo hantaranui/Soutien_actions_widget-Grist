@@ -29,6 +29,16 @@
 
   const FILTER_KEYS = ["region", "dept", "fede", "club"];
 
+  // Libellés des filtres, dans l'ordre d'affichage. search : champ avec
+  // recherche à la frappe (Autocomplete du DS) plutôt qu'une liste
+  // déroulante (Select), réservé à la liste des clubs, la seule longue.
+  const FILTERS = [
+    { key: "region", label: "Région" },
+    { key: "dept", label: "Département" },
+    { key: "fede", label: "Fédération" },
+    { key: "club", label: "Club", search: true },
+  ];
+
   // Les deux onglets. TAB_OPEN est celui d'arrivée : c'est la raison d'être
   // du widget (trouver une action à cofinancer) ; TAB_FUNDED sert à montrer
   // ce qui a abouti, sans polluer la liste utile.
@@ -88,6 +98,23 @@
     const q = String(query || "").trim().toLocaleLowerCase("fr-FR");
     if (!q) return options;
     return options.filter((o) => o.toLocaleLowerCase("fr-FR").includes(q));
+  }
+
+  /**
+   * Suggestions d'un filtre pour le texte présent dans son champ. Quand le
+   * champ affiche encore la valeur retenue (à la prise de focus, par
+   * exemple « Toutes »), on propose toute la liste plutôt que cette seule
+   * valeur : on vient chercher un autre choix.
+   */
+  function filterSuggestions(options, input, selected) {
+    const text = String(input || "").trim();
+    if (!text || text === selected) return options;
+    return filterOptionsByQuery(options, text);
+  }
+
+  // Nombre de filtres qui restreignent la liste (valeur autre que « Toutes »).
+  function activeFilterCount(state) {
+    return FILTER_KEYS.filter((k) => state[k] && state[k] !== ALL).length;
   }
 
   // grist.docApi.fetchTable renvoie un objet en colonnes ({id:[...], Col:[...]}).
@@ -427,6 +454,9 @@
     ALL,
     TABLES,
     FILTER_KEYS,
+    FILTERS,
+    filterSuggestions,
+    activeFilterCount,
     PAGE_SIZE,
     TABS,
     TAB_OPEN,

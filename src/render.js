@@ -17,7 +17,7 @@
 })(typeof window !== "undefined" ? window : globalThis, function (logic) {
   "use strict";
 
-  const { escapeHtml, filterOptionsByQuery } = logic;
+  const { escapeHtml } = logic;
 
   function renderEmptyState() {
     return `
@@ -164,38 +164,82 @@
     </div>`;
   }
 
-  // combo: { open: boolean, query: string } — état transitoire du champ de
-  // recherche (voir main.js). selectedValue: la valeur retenue pour ce filtre.
-  function comboOptionsHtml(options, query, selectedValue) {
-    const filtered = filterOptionsByQuery(options, query);
-    if (!filtered.length) {
-      return `<li class="lcse-combo-empty" role="presentation">Aucun résultat</li>`;
-    }
-    return filtered
-      .map((opt) => `<li role="option" data-value="${escapeHtml(opt)}" class="lcse-combo-option ${opt === selectedValue ? "is-selected" : ""}">${escapeHtml(opt)}</li>`)
+  // Options d'un filtre en liste déroulante. La valeur retenue est ajoutée
+  // si elle manque (elle peut ne plus figurer parmi les options de l'onglet
+  // courant) : sans cela, le navigateur afficherait la première option.
+  function renderFilterOptions(options, selected) {
+    const list = options.includes(selected) ? options : [selected, ...options];
+    return list
+      .map((o) => `<option value="${escapeHtml(o)}"${o === selected ? " selected" : ""}>${escapeHtml(o)}</option>`)
       .join("");
   }
 
-  function renderCombo(key, label, options, selectedValue, combo) {
-    const query = combo.open ? combo.query : "";
+  // Un filtre.
+  //  - Liste déroulante : composant Select du Design System (exemple de
+  //    code « Select · Défaut »), un <select> natif.
+  //  - Avec recherche (f.search) : composant Autocomplete du Design System
+  //    (exemple « Autocomplete · Défaut »). Le webcomponent
+  //    <ft-autocomplete> gère la liste, les flèches, les attributs ARIA,
+  //    l'annonce du nombre de résultats et le bouton d'effacement ; main.js
+  //    lui fournit les suggestions (searchCallback) et écoute le choix
+  //    (ft-autocomplete-change).
+  function renderFilter(f, value, options) {
+    const key = f.key;
+    const label = f.label;
+    const id = `lcse-filter-${key}`;
+    if (!f.search) {
+      return `
+        <div class="lcse-filter">
+          <label class="form-label" for="${id}">${escapeHtml(label)}</label>
+          <select class="form-control" data-filter="${key}" id="${id}" name="${key}">${renderFilterOptions(options || [], value)}</select>
+        </div>`;
+    }
     return `
-    <div class="form-group lcse-combo">
-      <label class="form-label" for="lcse-filter-${key}">${label}</label>
-      <div class="lcse-combo-wrap">
-        <input
-          id="lcse-filter-${key}"
-          class="form-control"
-          type="text"
-          autocomplete="off"
-          role="combobox"
-          aria-expanded="${combo.open ? "true" : "false"}"
-          aria-autocomplete="list"
-          data-filter="${key}"
-          value="${escapeHtml(combo.open ? combo.query : selectedValue)}"
-        >
-        <ul class="lcse-combo-list ${combo.open ? "" : "lcse-hidden"}" data-combo-list="${key}" role="listbox">
-          ${comboOptionsHtml(options, query, selectedValue)}
-        </ul>
+        <div class="autocomplete">
+          <label class="form-label" for="${id}">${escapeHtml(label)}</label>
+          <div class="form-control-wrapper">
+            <input class="form-control autocomplete-input" data-autocomplete="true" data-filter="${key}" id="${id}" name="${key}" placeholder=" " type="text" autocomplete="off" value="${escapeHtml(value)}">
+            <ft-autocomplete input-id="${id}" label-property="name"></ft-autocomplete>
+          </div>
+        </div>`;
+  }
+
+  // Pastille du nombre de filtres actifs, dans le déclencheur du bloc
+  // (exemple « Collapse · Filtre »). Rien quand aucun filtre n'est actif.
+  function renderFilterBadge(count) {
+    if (!count) return "";
+    return `<span class="badge badge-neutral">${count}<span class="sr-only">&nbsp;${count > 1 ? "filtres actifs" : "filtre actif"}</span></span>`;
+  }
+
+  /**
+   * Bloc des filtres : composant Collapse du Design System, variante
+   * « Filtre » (.ds-collapse.ds-collapse-sm.ds-collapse-filter). La
+   * directive data-ft-collapse ouvre et ferme le bloc et tient à jour
+   * aria-expanded / aria-controls : main.js ne le redessine jamais.
+   *
+   * @param {Array<{key:string,label:string,search?:boolean}>} filters
+   * @param {Object<string,string>} values valeur retenue par filtre.
+   * @param {number} activeCount
+   * @param {boolean} open état d'ouverture initial.
+   * @param {Object<string,string[]>} options options des listes déroulantes.
+   */
+  function renderFilters(filters, values, activeCount, open, options) {
+    return `
+    <div class="ds-collapse ds-collapse-sm ds-collapse-filter lcse-filters">
+      <h2 class="lcse-filters-heading">
+        <button class="ds-collapse-trigger is-rotating" data-ft-collapse="lcse-filters-panel" id="lcse-filters-trigger" type="button">
+          <span class="ds-collapse-trigger-content">Filtres</span><span class="ds-collapse-trigger-content-append" id="lcse-filters-count">${renderFilterBadge(activeCount)}</span>
+          <span aria-hidden="true" class="icon icon-chevron-sm-d"></span>
+        </button>
+      </h2>
+      <div id="lcse-filters-panel"${open ? ' class="open"' : ""}>
+        <div class="ds-collapse-content"${open ? "" : " hidden"}>
+          <div class="lcse-filters-grid">${filters.map((f) => renderFilter(f, values[f.key], (options || {})[f.key])).join("")}
+          </div>
+          <p class="lcse-filters-actions">
+            <button type="button" class="btn btn-reset text-link" data-action="reset">Réinitialiser les filtres</button>
+          </p>
+        </div>
       </div>
     </div>`;
   }
@@ -349,8 +393,10 @@
     renderTabPane,
     tabButtonId,
     renderLoadMore,
-    renderCombo,
-    comboOptionsHtml,
+    renderFilter,
+    renderFilterOptions,
+    renderFilterBadge,
+    renderFilters,
     renderModal,
     renderSentPanel,
     renderFormPanel,
