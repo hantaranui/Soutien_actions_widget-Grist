@@ -89,6 +89,10 @@ html, body {
 }
 
 .lcse-main {
+  /* width:100% : sur mobile, .lcse-main est un élément flex centré par
+     margin:auto, qui se réduirait à la largeur de son contenu — les
+     squelettes de chargement, sans largeur propre, s'écrasaient. */
+  width: 100%;
   max-width: 1440px;
   margin: 0 auto;
   padding: var(--ft-spacer-l1, 2rem) var(--ft-spacer-m1, 1.25rem) var(--ft-spacer-l3, 3rem);
@@ -96,6 +100,59 @@ html, body {
 
 @media (max-width: 480px) {
   .lcse-main { padding: var(--ft-spacer-m2, 1.5rem) var(--ft-spacer-s2, 1rem) var(--ft-spacer-l2, 2.5rem); }
+}
+
+/* Chargement : squelettes aux dimensions de la page réelle (titre, bloc
+   des filtres, cartes), pour que rien ne saute à l'arrivée des données. */
+
+.lcse-skeleton-page-title {
+  margin-bottom: var(--ft-spacer-l1, 2rem);
+}
+
+/* .skeleton-text:not(:last-child) du DS ajoute 0,5rem sous chaque ligne ;
+   les marges ci-dessous le remplacent là où le rythme de la carte diffère
+   (même spécificité que la règle du DS, notre feuille venant après). */
+.lcse-loading-state .lcse-skeleton-filters {
+  height: 3rem;
+  margin-bottom: var(--ft-spacer-m2, 1.5rem);
+  border-radius: var(--ft-radius-default, 0.75rem);
+}
+
+.lcse-card-skeleton .lcse-card-body {
+  padding-bottom: var(--ft-spacer-m1, 1.25rem);
+}
+
+.lcse-loading-state .lcse-skeleton-title {
+  margin: var(--ft-spacer-xs2, 0.5rem) 0 var(--ft-spacer-m1, 1.25rem);
+}
+
+.lcse-loading-state .lcse-skeleton-club {
+  margin-bottom: var(--ft-spacer-s2, 1rem);
+}
+
+.lcse-skeleton-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ft-spacer-s2, 1rem);
+  padding-top: var(--ft-spacer-s2, 1rem);
+  margin-bottom: var(--ft-spacer-m2, 1.5rem);
+  border-top: 1px solid var(--ft-color-border-neutral-weak, #e6e7ec);
+}
+
+.lcse-skeleton-meta .skeleton-text {
+  margin-bottom: 0;
+}
+
+.lcse-skeleton-bar {
+  height: 0.625rem;
+}
+
+/* Le DS anime ses squelettes sans condition : on arrête l'animation pour
+   qui a demandé moins de mouvement dans ses réglages système. */
+@media (prefers-reduced-motion: reduce) {
+  [class^="skeleton"] {
+    animation: none;
+  }
 }
 
 .lcse-loading,

@@ -19,6 +19,49 @@
 
   const { escapeHtml } = logic;
 
+  // Squelette d'une carte d'action, calqué sur sa structure (date, titre,
+  // club, métadonnées, jauge) pour que la grille ne saute pas à l'arrivée
+  // des données. Classes Skeleton du Design System : leur animation
+  // s'accroche à [class^=skeleton], la classe skeleton-* doit donc venir en
+  // premier dans l'attribut.
+  function renderCardSkeleton() {
+    return `
+      <div class="lcse-card lcse-card-skeleton">
+        <div class="lcse-card-body">
+          <div class="skeleton-text w-25"></div>
+          <div class="skeleton-h2 w-75 lcse-skeleton-title"></div>
+          <div class="skeleton-text w-50 lcse-skeleton-club"></div>
+          <div class="lcse-skeleton-meta">
+            <div class="skeleton-text"></div><div class="skeleton-text"></div>
+            <div class="skeleton-text"></div><div class="skeleton-text"></div>
+          </div>
+          <div class="skeleton-text w-50"></div>
+          <div class="skeleton-text lcse-skeleton-bar"></div>
+        </div>
+      </div>`;
+  }
+
+  /**
+   * État de chargement : squelettes du Design System (exemple de code
+   * « Skeleton · Card ») à la place du texte seul. Les squelettes sont
+   * masqués aux lecteurs d'écran (aria-hidden, comme dans l'exemple) ; un
+   * message de statut leur dit ce qui se passe (RGAA 7.5).
+   *
+   * @param {number} cards nombre de cartes fantômes.
+   */
+  function renderLoadingState(cards) {
+    return `
+    <div class="lcse-loading-state">
+      <p class="sr-only" role="status">Chargement des actions…</p>
+      <div aria-busy="true" aria-hidden="true">
+        <div class="skeleton-h1 w-50 lcse-skeleton-page-title"></div>
+        <div class="skeleton-text lcse-skeleton-filters"></div>
+        <div class="lcse-grid">${Array.from({ length: cards }, renderCardSkeleton).join("")}
+        </div>
+      </div>
+    </div>`;
+  }
+
   function renderEmptyState() {
     return `
     <div class="alert alert-info" role="status">
@@ -388,6 +431,7 @@
 
   return {
     renderEmptyState,
+    renderLoadingState,
     renderCard,
     renderTabs,
     renderTabPane,

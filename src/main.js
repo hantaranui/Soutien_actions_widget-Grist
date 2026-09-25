@@ -17,7 +17,7 @@
     filterSuggestions, activeFilterCount,
   } = window.LCSE;
   const {
-    renderEmptyState, renderCard, renderTabs, renderTabPane, tabButtonId,
+    renderEmptyState, renderLoadingState, renderCard, renderTabs, renderTabPane, tabButtonId,
     renderLoadMore, renderFilters, renderFilterBadge, renderFilterOptions,
     renderModal,
   } = window.LCSE;
@@ -128,7 +128,7 @@
     }
 
     if (!loaded) {
-      app.innerHTML = `<div class="lcse-loading"><p>Chargement des actions…</p></div>`;
+      app.innerHTML = renderLoadingState(6);
       return;
     }
 

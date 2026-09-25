@@ -364,3 +364,23 @@ describe("formulaire de soutien : erreurs et aides", () => {
     assert.deepEqual(R.SUPPORT_FORM_FIELDS.map((f) => f.name), L.SUPPORT_FIELDS);
   });
 });
+
+describe("renderLoadingState", () => {
+  test("squelettes du Design System, masqués aux lecteurs d'écran", () => {
+    const html = R.renderLoadingState(6);
+    assert.match(html, /<div aria-busy="true" aria-hidden="true">/);
+    assert.equal((html.match(/class="lcse-card lcse-card-skeleton"/g) || []).length, 6);
+  });
+
+  test("message de statut pour les lecteurs d'écran (RGAA 7.5)", () => {
+    assert.match(R.renderLoadingState(1), /<p class="sr-only" role="status">Chargement des actions…<\/p>/);
+  });
+
+  test("chaque classe skeleton-* vient en premier (l'animation du DS vise [class^=skeleton])", () => {
+    const html = R.renderLoadingState(1);
+    const classes = [...html.matchAll(/class="([^"]*)"/g)].map((m) => m[1])
+      .filter((c) => c.split(" ").some((k) => k.startsWith("skeleton-")));
+    assert.ok(classes.length > 5);
+    for (const c of classes) assert.match(c, /^skeleton-/, c);
+  });
+});

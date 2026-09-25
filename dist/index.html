@@ -104,6 +104,10 @@ html, body {
 }
 
 .lcse-main {
+  /* width:100% : sur mobile, .lcse-main est un élément flex centré par
+     margin:auto, qui se réduirait à la largeur de son contenu — les
+     squelettes de chargement, sans largeur propre, s'écrasaient. */
+  width: 100%;
   max-width: 1440px;
   margin: 0 auto;
   padding: var(--ft-spacer-l1, 2rem) var(--ft-spacer-m1, 1.25rem) var(--ft-spacer-l3, 3rem);
@@ -111,6 +115,59 @@ html, body {
 
 @media (max-width: 480px) {
   .lcse-main { padding: var(--ft-spacer-m2, 1.5rem) var(--ft-spacer-s2, 1rem) var(--ft-spacer-l2, 2.5rem); }
+}
+
+/* Chargement : squelettes aux dimensions de la page réelle (titre, bloc
+   des filtres, cartes), pour que rien ne saute à l'arrivée des données. */
+
+.lcse-skeleton-page-title {
+  margin-bottom: var(--ft-spacer-l1, 2rem);
+}
+
+/* .skeleton-text:not(:last-child) du DS ajoute 0,5rem sous chaque ligne ;
+   les marges ci-dessous le remplacent là où le rythme de la carte diffère
+   (même spécificité que la règle du DS, notre feuille venant après). */
+.lcse-loading-state .lcse-skeleton-filters {
+  height: 3rem;
+  margin-bottom: var(--ft-spacer-m2, 1.5rem);
+  border-radius: var(--ft-radius-default, 0.75rem);
+}
+
+.lcse-card-skeleton .lcse-card-body {
+  padding-bottom: var(--ft-spacer-m1, 1.25rem);
+}
+
+.lcse-loading-state .lcse-skeleton-title {
+  margin: var(--ft-spacer-xs2, 0.5rem) 0 var(--ft-spacer-m1, 1.25rem);
+}
+
+.lcse-loading-state .lcse-skeleton-club {
+  margin-bottom: var(--ft-spacer-s2, 1rem);
+}
+
+.lcse-skeleton-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ft-spacer-s2, 1rem);
+  padding-top: var(--ft-spacer-s2, 1rem);
+  margin-bottom: var(--ft-spacer-m2, 1.5rem);
+  border-top: 1px solid var(--ft-color-border-neutral-weak, #e6e7ec);
+}
+
+.lcse-skeleton-meta .skeleton-text {
+  margin-bottom: 0;
+}
+
+.lcse-skeleton-bar {
+  height: 0.625rem;
+}
+
+/* Le DS anime ses squelettes sans condition : on arrête l'animation pour
+   qui a demandé moins de mouvement dans ses réglages système. */
+@media (prefers-reduced-motion: reduce) {
+  [class^="skeleton"] {
+    animation: none;
+  }
 }
 
 .lcse-loading,
@@ -582,9 +639,9 @@ html, body {
 </header>
 
 <main id="app" class="lcse-main">
-  <div class="lcse-loading" id="state-loading">
-    <p>Chargement des actions…</p>
-  </div>
+  <!-- Remplacé dès le démarrage du script par les squelettes de chargement
+       (render.js, renderLoadingState). -->
+  <p class="lcse-loading">Chargement des actions…</p>
 </main>
 
 <!-- La modale vit hors de <main> : à l'intérieur d'une zone qui défile,
@@ -1108,6 +1165,49 @@ html, body {
 
   const { escapeHtml } = logic;
 
+  // Squelette d'une carte d'action, calqué sur sa structure (date, titre,
+  // club, métadonnées, jauge) pour que la grille ne saute pas à l'arrivée
+  // des données. Classes Skeleton du Design System : leur animation
+  // s'accroche à [class^=skeleton], la classe skeleton-* doit donc venir en
+  // premier dans l'attribut.
+  function renderCardSkeleton() {
+    return `
+      <div class="lcse-card lcse-card-skeleton">
+        <div class="lcse-card-body">
+          <div class="skeleton-text w-25"></div>
+          <div class="skeleton-h2 w-75 lcse-skeleton-title"></div>
+          <div class="skeleton-text w-50 lcse-skeleton-club"></div>
+          <div class="lcse-skeleton-meta">
+            <div class="skeleton-text"></div><div class="skeleton-text"></div>
+            <div class="skeleton-text"></div><div class="skeleton-text"></div>
+          </div>
+          <div class="skeleton-text w-50"></div>
+          <div class="skeleton-text lcse-skeleton-bar"></div>
+        </div>
+      </div>`;
+  }
+
+  /**
+   * État de chargement : squelettes du Design System (exemple de code
+   * « Skeleton · Card ») à la place du texte seul. Les squelettes sont
+   * masqués aux lecteurs d'écran (aria-hidden, comme dans l'exemple) ; un
+   * message de statut leur dit ce qui se passe (RGAA 7.5).
+   *
+   * @param {number} cards nombre de cartes fantômes.
+   */
+  function renderLoadingState(cards) {
+    return `
+    <div class="lcse-loading-state">
+      <p class="sr-only" role="status">Chargement des actions…</p>
+      <div aria-busy="true" aria-hidden="true">
+        <div class="skeleton-h1 w-50 lcse-skeleton-page-title"></div>
+        <div class="skeleton-text lcse-skeleton-filters"></div>
+        <div class="lcse-grid">${Array.from({ length: cards }, renderCardSkeleton).join("")}
+        </div>
+      </div>
+    </div>`;
+  }
+
   function renderEmptyState() {
     return `
     <div class="alert alert-info" role="status">
@@ -1477,6 +1577,7 @@ html, body {
 
   return {
     renderEmptyState,
+    renderLoadingState,
     renderCard,
     renderTabs,
     renderTabPane,
@@ -1515,7 +1616,7 @@ html, body {
     filterSuggestions, activeFilterCount,
   } = window.LCSE;
   const {
-    renderEmptyState, renderCard, renderTabs, renderTabPane, tabButtonId,
+    renderEmptyState, renderLoadingState, renderCard, renderTabs, renderTabPane, tabButtonId,
     renderLoadMore, renderFilters, renderFilterBadge, renderFilterOptions,
     renderModal,
   } = window.LCSE;
@@ -1626,7 +1727,7 @@ html, body {
     }
 
     if (!loaded) {
-      app.innerHTML = `<div class="lcse-loading"><p>Chargement des actions…</p></div>`;
+      app.innerHTML = renderLoadingState(6);
       return;
     }
 
