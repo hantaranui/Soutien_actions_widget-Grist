@@ -40,9 +40,13 @@ describe("renderCard", () => {
     assert.match(R.renderCard(SAMPLE_ACTION), /class="progress-percent">40&nbsp;%/);
   });
 
-  test("titre focalisable par script, hors de l'ordre de tabulation", () => {
+  test("titre en classe .t4 du DS, focalisable par script hors de l'ordre de tabulation", () => {
     const html = R.renderCard(SAMPLE_ACTION);
-    assert.match(html, /<h2 class="lcse-card-title" id="lcse-card-42-title" tabindex="-1">/);
+    assert.match(html, /<h2 class="t4 lcse-card-title" id="lcse-card-42-title" tabindex="-1">/);
+  });
+
+  test("bouton Soutenir : libellé dans .btn-content", () => {
+    assert.match(R.renderCard(SAMPLE_ACTION), /<span class="btn-content">Soutenir<\/span><\/button>/);
   });
 
   test("bouton au libellé court, contexte conservé via aria-label", () => {
@@ -400,5 +404,30 @@ describe("renderLoadingState", () => {
       .filter((c) => c.split(" ").some((k) => k.startsWith("skeleton-")));
     assert.ok(classes.length > 5);
     for (const c of classes) assert.match(c, /^skeleton-/, c);
+  });
+});
+
+describe("renderAlert", () => {
+  test("information : balisage de ft-alert du DS, icône et role=status", () => {
+    const html = R.renderAlert("info", "Titre", "Texte");
+    assert.match(html, /<div class="alert alert-info" role="status">\s*<div class="alert-icon-container has-icon-top"><span aria-hidden="true" class="icon icon-info-full"><\/span><\/div>/);
+    assert.match(html, /<p class="alert-title">Titre<\/p>\s*<p class="alert-content">Texte<\/p>/);
+  });
+
+  test("erreur : icône d'erreur et role=alert", () => {
+    const html = R.renderAlert("error", "Titre", "Texte");
+    assert.match(html, /class="alert alert-error" role="alert"/);
+    assert.match(html, /icon-error-full/);
+  });
+
+  test("l'état vide utilise l'alerte d'information", () => {
+    assert.match(R.renderEmptyState(), /alert-info[\s\S]*icon-info-full[\s\S]*Aucune action sur ce périmètre/);
+  });
+});
+
+describe("renderLoadMore : libellé dans .btn-content", () => {
+  test("bouton du DS avec .btn-content", () => {
+    const html = R.renderLoadMore({ shown: 24, total: 60, remaining: 36, nextBatch: 24 });
+    assert.match(html, /<button type="button" class="btn btn-secondary" data-action="load-more"><span class="btn-content">Charger 24 actions de plus<\/span><\/button>/);
   });
 });

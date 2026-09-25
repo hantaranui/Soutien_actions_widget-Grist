@@ -62,14 +62,32 @@
     </div>`;
   }
 
-  function renderEmptyState() {
+  /**
+   * Alerte du Design System. Même balisage que le rendu interne du
+   * webcomponent <ft-alert> (conteneur d'icône + corps), sans le
+   * webcomponent, qui rechargerait la feuille du DS dans son Shadow DOM.
+   * role : « status » pour une information, « alert » pour une erreur,
+   * comme le fait <ft-alert>.
+   *
+   * @param {"info"|"error"} version
+   * @param {string} titleHtml titre, déjà échappé.
+   * @param {string} contentHtml texte, déjà échappé.
+   */
+  function renderAlert(version, titleHtml, contentHtml) {
+    const icon = version === "error" ? "error-full" : "info-full";
     return `
-    <div class="alert alert-info" role="status">
+    <div class="alert alert-${version}" role="${version === "error" ? "alert" : "status"}">
+      <div class="alert-icon-container has-icon-top"><span aria-hidden="true" class="icon icon-${icon}"></span></div>
       <div class="alert-body">
-        <p class="alert-title">Aucune action sur ce périmètre</p>
-        <p class="alert-content">Élargissez la sélection pour voir les actions des territoires voisins.</p>
+        <p class="alert-title">${titleHtml}</p>
+        <p class="alert-content">${contentHtml}</p>
       </div>
     </div>`;
+  }
+
+  function renderEmptyState() {
+    return renderAlert("info", "Aucune action sur ce périmètre",
+      "Élargissez la sélection pour voir les actions des territoires voisins.");
   }
 
   /**
@@ -106,7 +124,7 @@
         <div class="lcse-card-top">
           <div class="lcse-card-heading">
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
-            <h2 class="lcse-card-title" id="lcse-card-${a.id}-title" tabindex="-1">${escapeHtml(a.intitule)}</h2>
+            <h2 class="t4 lcse-card-title" id="lcse-card-${a.id}-title" tabindex="-1">${escapeHtml(a.intitule)}</h2>
           </div>
           ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
         </div>
@@ -141,7 +159,7 @@
             // Libellé court pour laisser la place à la jauge ; aria-label
             // redonne le contexte aux lecteurs d'écran, qui annoncent
             // souvent les boutons hors de leur carte.
-            : `<button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}">Soutenir</button>`}
+            : `<button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}"><span class="btn-content">Soutenir</span></button>`}
         </div>
       </div>
     </article>`;
@@ -225,9 +243,7 @@
     return `
     <div class="lcse-more">
       <p class="lcse-more-info">${p.shown} actions affichées sur ${p.total}</p>
-      <button type="button" class="btn btn-secondary" data-action="load-more">
-        Charger ${p.nextBatch} ${actionsWord} de plus
-      </button>
+      <button type="button" class="btn btn-secondary" data-action="load-more"><span class="btn-content">Charger ${p.nextBatch} ${actionsWord} de plus</span></button>
     </div>`;
   }
 
@@ -455,6 +471,7 @@
 
   return {
     renderEmptyState,
+    renderAlert,
     renderLoadingState,
     renderCard,
     renderProgress,

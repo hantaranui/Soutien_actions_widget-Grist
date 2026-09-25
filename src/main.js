@@ -17,7 +17,7 @@
     filterSuggestions, activeFilterCount,
   } = window.LCSE;
   const {
-    renderEmptyState, renderLoadingState, renderCard, renderTabs, renderTabPane, tabButtonId,
+    renderEmptyState, renderLoadingState, renderAlert, renderCard, renderTabs, renderTabPane, tabButtonId,
     renderLoadMore, renderFilters, renderFilterBadge, renderFilterOptions,
     renderModal,
   } = window.LCSE;
@@ -113,17 +113,15 @@
 
   // Le titre et les filtres sont-ils déjà dans la page ? (voir render)
   let shellRendered = false;
+  // Dernier compteur affiché (« 3 actions ouvertes au soutien »), pour
+  // n'annoncer que ses changements.
+  let lastCountLabel = null;
 
   function render() {
     if (loadError) {
       shellRendered = false;
-      app.innerHTML = `
-      <div class="alert alert-error" role="alert">
-        <div class="alert-body">
-          <p class="alert-title">Impossible de charger les actions</p>
-          <p class="alert-content">${window.LCSE.escapeHtml(loadError)}</p>
-        </div>
-      </div>`;
+      lastCountLabel = null;
+      app.innerHTML = renderAlert("error", "Impossible de charger les actions", window.LCSE.escapeHtml(loadError));
       return;
     }
 
@@ -161,9 +159,10 @@
       app.innerHTML = `
     <div class="lcse-title-row">
       <div class="lcse-title-bar"></div>
-      <h1 class="lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
+      <h1 class="display-4 lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
     </div>
     ${renderFilters(FILTERS, state, activeFilterCount(state), state.filtersOpen, allFilterOptions())}
+    <p class="sr-only" role="status" id="lcse-results-status"></p>
     <div id="lcse-results"></div>`;
       bindFilterEvents();
       shellRendered = true;
@@ -177,6 +176,17 @@
       ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
       ${renderLoadMore(pagination)}
     `)}`;
+
+    // Résultat d'un filtre ou d'un changement d'onglet annoncé aux lecteurs
+    // d'écran (RGAA 7.5) : la liste redessinée ne l'est pas d'elle-même. La
+    // zone de statut, elle, n'est jamais redessinée. Rien au premier
+    // affichage, ni quand le compteur ne change pas (ouverture de la
+    // modale, « Charger … de plus »).
+    const status = document.getElementById("lcse-results-status");
+    if (status && lastCountLabel !== null && countLabel !== lastCountLabel) {
+      status.textContent = countLabel;
+    }
+    lastCountLabel = countLabel;
 
     renderModalRoot(openAction);
 

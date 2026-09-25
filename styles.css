@@ -180,15 +180,9 @@ html, body {
   border-radius: 2px;
 }
 
+/* Taille, graisse et adaptation à l'écran : classe .display-4 du DS. */
 .lcse-title {
   margin: 0;
-  font-size: var(--ft-font-size-display-4, 1.75rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-@media (max-width: 480px) {
-  .lcse-title { font-size: 1.375rem; }
 }
 
 /* Filtres : composant Collapse du Design System, variante « Filtre »
@@ -352,11 +346,8 @@ html, body {
   /* tabindex="-1" : focalisable par script (après « Charger … de plus »),
      hors de l'ordre de tabulation. */
   scroll-margin-top: var(--ft-spacer-m2, 1.5rem);
+  /* Taille et graisse : classe .t4 du DS. */
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  line-height: 1.3;
 }
 
 .lcse-card-photo {
@@ -432,20 +423,11 @@ html, body {
   margin-bottom: var(--ft-spacer-m1, 1.25rem);
 }
 
-/* Le bouton garde sa largeur naturelle (flex-grow:0) : il ne s'étire plus
-   pour égaler la jauge, qui récupère toute la place restante. Le
-   remplissage horizontal est resserré à la valeur des boutons compacts du
-   Design System (0,75rem) au lieu de celle des boutons
-   normaux (1rem), pour ne pas laisser de vide de part et d'autre de
-   « Soutenir » — la hauteur, elle, reste celle d'un bouton normal
-   (2,5rem), suffisante au doigt. */
+/* Bouton « Soutenir » à la taille standard du DS (hauteur, marges,
+   texte), sans surcharge ; il garde sa largeur naturelle (flex-grow:0),
+   la jauge récupère toute la place restante. */
 .lcse-card-footer .btn {
   flex: 0 0 auto;
-  padding: 0 var(--ft-spacer-s1, 0.75rem);
-  /* 14px, comme le bouton du design de référence (Page de soutien.dc.html) :
-     le Design System met 16px par défaut, ce qui élargissait le bouton
-     d'une vingtaine de pixels sans rien apporter. */
-  font-size: 0.875rem;
   white-space: nowrap;
 }
 

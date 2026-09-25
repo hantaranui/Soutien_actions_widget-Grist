@@ -195,15 +195,9 @@ html, body {
   border-radius: 2px;
 }
 
+/* Taille, graisse et adaptation à l'écran : classe .display-4 du DS. */
 .lcse-title {
   margin: 0;
-  font-size: var(--ft-font-size-display-4, 1.75rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-@media (max-width: 480px) {
-  .lcse-title { font-size: 1.375rem; }
 }
 
 /* Filtres : composant Collapse du Design System, variante « Filtre »
@@ -367,11 +361,8 @@ html, body {
   /* tabindex="-1" : focalisable par script (après « Charger … de plus »),
      hors de l'ordre de tabulation. */
   scroll-margin-top: var(--ft-spacer-m2, 1.5rem);
+  /* Taille et graisse : classe .t4 du DS. */
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  line-height: 1.3;
 }
 
 .lcse-card-photo {
@@ -447,20 +438,11 @@ html, body {
   margin-bottom: var(--ft-spacer-m1, 1.25rem);
 }
 
-/* Le bouton garde sa largeur naturelle (flex-grow:0) : il ne s'étire plus
-   pour égaler la jauge, qui récupère toute la place restante. Le
-   remplissage horizontal est resserré à la valeur des boutons compacts du
-   Design System (0,75rem) au lieu de celle des boutons
-   normaux (1rem), pour ne pas laisser de vide de part et d'autre de
-   « Soutenir » — la hauteur, elle, reste celle d'un bouton normal
-   (2,5rem), suffisante au doigt. */
+/* Bouton « Soutenir » à la taille standard du DS (hauteur, marges,
+   texte), sans surcharge ; il garde sa largeur naturelle (flex-grow:0),
+   la jauge récupère toute la place restante. */
 .lcse-card-footer .btn {
   flex: 0 0 auto;
-  padding: 0 var(--ft-spacer-s1, 0.75rem);
-  /* 14px, comme le bouton du design de référence (Page de soutien.dc.html) :
-     le Design System met 16px par défaut, ce qui élargissait le bouton
-     d'une vingtaine de pixels sans rien apporter. */
-  font-size: 0.875rem;
   white-space: nowrap;
 }
 
@@ -1222,14 +1204,32 @@ html, body {
     </div>`;
   }
 
-  function renderEmptyState() {
+  /**
+   * Alerte du Design System. Même balisage que le rendu interne du
+   * webcomponent <ft-alert> (conteneur d'icône + corps), sans le
+   * webcomponent, qui rechargerait la feuille du DS dans son Shadow DOM.
+   * role : « status » pour une information, « alert » pour une erreur,
+   * comme le fait <ft-alert>.
+   *
+   * @param {"info"|"error"} version
+   * @param {string} titleHtml titre, déjà échappé.
+   * @param {string} contentHtml texte, déjà échappé.
+   */
+  function renderAlert(version, titleHtml, contentHtml) {
+    const icon = version === "error" ? "error-full" : "info-full";
     return `
-    <div class="alert alert-info" role="status">
+    <div class="alert alert-${version}" role="${version === "error" ? "alert" : "status"}">
+      <div class="alert-icon-container has-icon-top"><span aria-hidden="true" class="icon icon-${icon}"></span></div>
       <div class="alert-body">
-        <p class="alert-title">Aucune action sur ce périmètre</p>
-        <p class="alert-content">Élargissez la sélection pour voir les actions des territoires voisins.</p>
+        <p class="alert-title">${titleHtml}</p>
+        <p class="alert-content">${contentHtml}</p>
       </div>
     </div>`;
+  }
+
+  function renderEmptyState() {
+    return renderAlert("info", "Aucune action sur ce périmètre",
+      "Élargissez la sélection pour voir les actions des territoires voisins.");
   }
 
   /**
@@ -1266,7 +1266,7 @@ html, body {
         <div class="lcse-card-top">
           <div class="lcse-card-heading">
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
-            <h2 class="lcse-card-title" id="lcse-card-${a.id}-title" tabindex="-1">${escapeHtml(a.intitule)}</h2>
+            <h2 class="t4 lcse-card-title" id="lcse-card-${a.id}-title" tabindex="-1">${escapeHtml(a.intitule)}</h2>
           </div>
           ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
         </div>
@@ -1301,7 +1301,7 @@ html, body {
             // Libellé court pour laisser la place à la jauge ; aria-label
             // redonne le contexte aux lecteurs d'écran, qui annoncent
             // souvent les boutons hors de leur carte.
-            : `<button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}">Soutenir</button>`}
+            : `<button type="button" class="btn btn-primary" data-action="support" data-id="${a.id}" aria-label="Soutenir cette action : ${escapeHtml(a.intitule)}"><span class="btn-content">Soutenir</span></button>`}
         </div>
       </div>
     </article>`;
@@ -1385,9 +1385,7 @@ html, body {
     return `
     <div class="lcse-more">
       <p class="lcse-more-info">${p.shown} actions affichées sur ${p.total}</p>
-      <button type="button" class="btn btn-secondary" data-action="load-more">
-        Charger ${p.nextBatch} ${actionsWord} de plus
-      </button>
+      <button type="button" class="btn btn-secondary" data-action="load-more"><span class="btn-content">Charger ${p.nextBatch} ${actionsWord} de plus</span></button>
     </div>`;
   }
 
@@ -1615,6 +1613,7 @@ html, body {
 
   return {
     renderEmptyState,
+    renderAlert,
     renderLoadingState,
     renderCard,
     renderProgress,
@@ -1655,7 +1654,7 @@ html, body {
     filterSuggestions, activeFilterCount,
   } = window.LCSE;
   const {
-    renderEmptyState, renderLoadingState, renderCard, renderTabs, renderTabPane, tabButtonId,
+    renderEmptyState, renderLoadingState, renderAlert, renderCard, renderTabs, renderTabPane, tabButtonId,
     renderLoadMore, renderFilters, renderFilterBadge, renderFilterOptions,
     renderModal,
   } = window.LCSE;
@@ -1751,17 +1750,15 @@ html, body {
 
   // Le titre et les filtres sont-ils déjà dans la page ? (voir render)
   let shellRendered = false;
+  // Dernier compteur affiché (« 3 actions ouvertes au soutien »), pour
+  // n'annoncer que ses changements.
+  let lastCountLabel = null;
 
   function render() {
     if (loadError) {
       shellRendered = false;
-      app.innerHTML = `
-      <div class="alert alert-error" role="alert">
-        <div class="alert-body">
-          <p class="alert-title">Impossible de charger les actions</p>
-          <p class="alert-content">${window.LCSE.escapeHtml(loadError)}</p>
-        </div>
-      </div>`;
+      lastCountLabel = null;
+      app.innerHTML = renderAlert("error", "Impossible de charger les actions", window.LCSE.escapeHtml(loadError));
       return;
     }
 
@@ -1799,9 +1796,10 @@ html, body {
       app.innerHTML = `
     <div class="lcse-title-row">
       <div class="lcse-title-bar"></div>
-      <h1 class="lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
+      <h1 class="display-4 lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
     </div>
     ${renderFilters(FILTERS, state, activeFilterCount(state), state.filtersOpen, allFilterOptions())}
+    <p class="sr-only" role="status" id="lcse-results-status"></p>
     <div id="lcse-results"></div>`;
       bindFilterEvents();
       shellRendered = true;
@@ -1815,6 +1813,17 @@ html, body {
       ${list.length === 0 ? renderEmptyState() : `<div class="lcse-grid">${pagination.page.map(renderCard).join("")}</div>`}
       ${renderLoadMore(pagination)}
     `)}`;
+
+    // Résultat d'un filtre ou d'un changement d'onglet annoncé aux lecteurs
+    // d'écran (RGAA 7.5) : la liste redessinée ne l'est pas d'elle-même. La
+    // zone de statut, elle, n'est jamais redessinée. Rien au premier
+    // affichage, ni quand le compteur ne change pas (ouverture de la
+    // modale, « Charger … de plus »).
+    const status = document.getElementById("lcse-results-status");
+    if (status && lastCountLabel !== null && countLabel !== lastCountLabel) {
+      status.textContent = countLabel;
+    }
+    lastCountLabel = countLabel;
 
     renderModalRoot(openAction);
 
