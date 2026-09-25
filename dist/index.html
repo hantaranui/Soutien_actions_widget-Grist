@@ -183,11 +183,15 @@ html, body {
   margin-bottom: var(--ft-spacer-l1, 2rem);
 }
 
+/* Filet d'accent à gauche du titre, commun aux widgets du projet : même
+   bleu que celui du widget tableau de bord (#2b72ff). Token du DS le plus
+   proche, à une unité près sur deux composantes (#2c74ff), pour ne pas
+   coder la couleur en dur. */
 .lcse-title-bar {
   width: 4px;
   align-self: stretch;
   flex: 0 0 4px;
-  background: var(--ft-color-background-primary-default, #283276);
+  background: var(--ft-color-background-info-default, #2c74ff);
   border-radius: 2px;
 }
 
