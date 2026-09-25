@@ -28,6 +28,11 @@ describe("renderCard", () => {
     assert.match(html, /width:40%/);
   });
 
+  test("titre focalisable par script, hors de l'ordre de tabulation", () => {
+    const html = R.renderCard(SAMPLE_ACTION);
+    assert.match(html, /<h2 class="lcse-card-title" id="lcse-card-42-title" tabindex="-1">/);
+  });
+
   test("bouton au libellé court, contexte conservé via aria-label", () => {
     const html = R.renderCard(SAMPLE_ACTION);
     assert.match(html, />Soutenir</, "libellé court, pour laisser la place à la jauge");

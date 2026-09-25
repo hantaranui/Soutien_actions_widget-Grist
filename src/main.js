@@ -63,7 +63,7 @@
     // État initial seulement : ensuite, c'est la directive de repli du
     // Design System qui ouvre et ferme le bloc.
     filtersOpen: !(typeof window !== "undefined" && window.matchMedia
-      && window.matchMedia("(max-width: 680px)").matches),
+      && window.matchMedia("(max-width: 767.98px)").matches),
   };
 
   let actions = []; // liste jointe et prête à l'affichage
@@ -365,12 +365,18 @@
 
     app.querySelectorAll('[data-action="load-more"]').forEach((el) => {
       el.addEventListener("click", () => {
+        const firstNew = state.visibleCount;
         state.visibleCount += PAGE_SIZE;
-        // render() remplace tout le contenu de <main> : on remet le
-        // défilement où il était, sinon le clic renvoie en haut de page.
+        // render() remplace la liste : on remet le défilement où il était,
+        // sinon le clic renvoie en haut de page.
         const y = window.scrollY;
         render();
         window.scrollTo(0, y);
+        // Le bouton a disparu avec la liste : le focus irait en haut du
+        // document (RGAA 12.8). Il passe au titre de la première carte
+        // ajoutée, là où la lecture reprend.
+        const title = app.querySelectorAll(".lcse-grid .lcse-card-title")[firstNew];
+        if (title) title.focus({ preventScroll: true });
       });
     });
 

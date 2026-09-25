@@ -36,7 +36,7 @@
         <div class="lcse-card-top">
           <div class="lcse-card-heading">
             <p class="lcse-card-date">${escapeHtml(a.dateLabel)}</p>
-            <h2 class="lcse-card-title">${escapeHtml(a.intitule)}</h2>
+            <h2 class="lcse-card-title" id="lcse-card-${a.id}-title" tabindex="-1">${escapeHtml(a.intitule)}</h2>
           </div>
           ${a.photoUrl ? `<div class="lcse-card-photo"><img src="${escapeHtml(a.photoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.closest('.lcse-card-photo').remove()"></div>` : ""}
         </div>
