@@ -333,13 +333,18 @@ html, body {
   min-width: 0;
 }
 
+/* Surtitre : un seul style pour la date des cartes et le « Soutenir une
+   action » de la modale. Le DS n'a pas de surtitre en capitales espacées ;
+   on s'en tient à son texte courant, en petit gras de couleur primaire. */
+.lcse-card-date,
+.lcse-modal-kicker {
+  font-size: var(--ft-font-size-text-small, 0.875rem);
+  font-weight: 700;
+  color: var(--ft-color-text-primary-default, #283276);
+}
+
 .lcse-card-date {
   margin: 0 0 var(--ft-spacer-xs2, 0.5rem);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ft-color-text-primary-default, #283276);
 }
 
 .lcse-card-title {
@@ -400,10 +405,10 @@ html, body {
 }
 
 .lcse-card-meta dt {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  /* Libellé en casse normale et en petit texte du DS (14px) : les
+     capitales de 11px se lisaient mal. La valeur (dd) reste en gras. */
+  font-size: var(--ft-font-size-text-small, 0.875rem);
+  font-weight: 400;
   color: var(--ft-color-text-content-weak, #5b5d65);
   margin-bottom: var(--ft-spacer-xxs, 0.125rem);
 }
@@ -512,12 +517,8 @@ html, body {
 }
 
 .lcse-modal-kicker {
+  /* Taille, graisse, couleur : voir le surtitre des cartes. */
   margin: 0 0 var(--ft-spacer-xs1, 0.25rem);
-  font-size: var(--ft-font-size-text-xsmall, 0.75rem);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ft-color-text-primary-default, #283276);
 }
 
 .lcse-modal-meta {
