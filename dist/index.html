@@ -14,11 +14,16 @@
 
 <style>
 /* Mise en page du widget "Soutenez les clubs sportifs engagés".
-   Les couleurs, la typographie (Marianne), les rayons et les composants
+   Les couleurs, la typographie, les rayons et les composants
    (.btn, .form-control, .modal, .alert, .badge, .progress) viennent du
    Design System France Travail (styles.css, chargé dans index.html) —
    ce fichier ne fait que composer la mise en page propre au widget avec
-   les tokens --ft--*. */
+   les tokens du DS (--ft-*, et encore quelques --ft--* plus anciens).
+
+   Typographie : c'est la feuille du DS qui la fixe (page Typographie) —
+   Marianne pour les titres (h1-h6, .t1-.t5, .display-*), police système
+   pour le texte courant, dont les boutons et les champs héritent. Aucune
+   règle font-family ici. */
 
 * { box-sizing: border-box; }
 
@@ -28,10 +33,6 @@ html, body {
      cartes qui les détachent, pas un fond foncé. */
   background: var(--ft--color-background-neutral-default-weakest, #f5f5f8);
   color: var(--ft--color-text-color, #2e2e31);
-}
-
-body {
-  font-family: Marianne, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* Sur mobile, le widget est souvent affiché dans un cadre (iframe) dont la
@@ -127,7 +128,6 @@ body {
 
 .lcse-title {
   margin: 0;
-  font-family: Marianne, system-ui, sans-serif;
   font-size: var(--ft--font-size-display-4, 1.75rem);
   font-weight: 700;
   letter-spacing: -0.01em;
