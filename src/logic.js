@@ -67,9 +67,13 @@
   // toLocaleString("fr-FR") sépare les milliers par une espace fine
   // insécable (U+202F), pas une espace normale : on la remplace par une
   // espace normale pour un rendu/copier-coller plus prévisible.
+  // Espaces insécables (U+00A0) : ni entre les milliers ni avant « € » la
+  // ligne ne doit se couper (« 5 / 000 € »). Pas l'espace fine U+202F que
+  // produit toLocaleString, mal restituée au copier-coller et par certaines
+  // polices.
   function eur(n) {
     const num = Number(n) || 0;
-    return num.toLocaleString("fr-FR").replace(/ /g, " ") + " €";
+    return num.toLocaleString("fr-FR").replace(/\s/g, "\u00a0") + "\u00a0€";
   }
 
   // Fuseau fixé à Europe/Paris : ces dates sont celles d'actions en France

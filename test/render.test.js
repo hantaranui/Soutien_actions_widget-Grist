@@ -28,6 +28,18 @@ describe("renderCard", () => {
     assert.match(html, /width:40%/);
   });
 
+  test("jauge : balisage de ft-progressbar du DS, pourcentage lu, barre masquée", () => {
+    const html = R.renderProgress("2 000 € cofinancés sur 5 000 €", 40);
+    assert.match(html, /<div class="progressbar-container lcse-card-progress">/);
+    assert.match(html, /<p class="progress-label"><span>2 000 € cofinancés sur 5 000 €<\/span><strong class="progress-percent">40&nbsp;%<span class="sr-only">&nbsp;financé<\/span><\/strong><\/p>/);
+    assert.match(html, /<div class="progress" aria-hidden="true"><div class="progress-bar" style="width:40%"><\/div><\/div>/);
+    assert.ok(!html.includes("role=\"progressbar\""));
+  });
+
+  test("la carte utilise la jauge", () => {
+    assert.match(R.renderCard(SAMPLE_ACTION), /class="progress-percent">40&nbsp;%/);
+  });
+
   test("titre focalisable par script, hors de l'ordre de tabulation", () => {
     const html = R.renderCard(SAMPLE_ACTION);
     assert.match(html, /<h2 class="lcse-card-title" id="lcse-card-42-title" tabindex="-1">/);
@@ -288,6 +300,12 @@ describe("renderCard sur une action déjà financée", () => {
     const html = R.renderCard(FINANCEE);
     assert.ok(!html.includes('data-action="support"'), "aucun bouton de soutien");
     assert.match(html, /Financée à 100 %/);
+  });
+
+  test("pas de pourcentage à côté de la jauge : « Financée à 100 % » le dit déjà", () => {
+    const html = R.renderCard(FINANCEE);
+    assert.ok(!html.includes("progress-percent"));
+    assert.equal((html.match(/100 %/g) || []).length, 1);
   });
 
   test("la jauge reste affichée, à 100%", () => {

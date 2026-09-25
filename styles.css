@@ -144,7 +144,7 @@ html, body {
 }
 
 .lcse-skeleton-bar {
-  height: 0.625rem;
+  height: 0.5rem; /* hauteur de .progress du DS */
 }
 
 /* Le DS anime ses squelettes sans condition : on arrête l'animation pour
@@ -467,18 +467,24 @@ html, body {
   .lcse-card-footer .btn { margin-left: auto; }
 }
 
-.lcse-card-progress .progress-label {
-  margin-bottom: var(--ft-spacer-xs2, 0.5rem);
-  /* 14px comme la référence (et non 13px) : c'est le montant cofinancé,
-     l'information que la carte doit mettre en avant. */
-  font-size: 0.875rem;
-  font-weight: 600;
+.lcse-card-progress {
+  /* Couleur de la barre par la variable prévue par le DS : bleu primaire
+     plutôt que son bleu décoratif par défaut, pour rester dans la couleur
+     du bouton « Soutenir » voisin. */
+  --ft--progressbar-bg-color: var(--ft-color-background-primary-default, #283276);
+  /* Le DS espace libellé et barre de 0,75rem : resserré, la jauge se lit
+     comme un seul bloc à côté du bouton. */
+  row-gap: var(--ft-spacer-xs2, 0.5rem);
 }
 
-/* 10px : un cran au-dessus des 8px du design de référence, la barre se
-   lit mieux sans devenir un bandeau. */
-.lcse-card-progress .progress { width: 100%; height: 0.625rem; }
-.lcse-card-progress .progress-bar { background-color: var(--ft-color-background-primary-default, #283276); height: 100%; }
+.lcse-card-progress .progress-label {
+  /* 14px comme la référence : c'est le montant cofinancé, l'information
+     que la carte doit mettre en avant ; en 16px, libellé et pourcentage
+     ne tiendraient plus sur une ligne dans la grille à trois colonnes. */
+  font-size: var(--ft-font-size-text-small, 0.875rem);
+  font-weight: 600;
+  column-gap: var(--ft-spacer-s1, 0.75rem);
+}
 
 /* Modale de soutien (modale centrée .modal-lg du Design System) */
 

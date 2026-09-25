@@ -72,6 +72,33 @@
     </div>`;
   }
 
+  /**
+   * Jauge de cofinancement. Même balisage que le rendu interne du
+   * webcomponent <ft-progressbar> du Design System (.progressbar-container,
+   * .progress-label, .progress-percent, .progress, .progress-bar), sans le
+   * webcomponent lui-même : celui-ci charge la feuille complète du DS dans
+   * le Shadow DOM de chaque jauge (jusqu'à 24 par liste, à chaque rendu) et
+   * sa barre role="progressbar" n'a pas de nom accessible.
+   *
+   * L'information passe par le texte (libellé + pourcentage), lu par les
+   * lecteurs d'écran ; la barre, purement visuelle, leur est masquée.
+   *
+   * @param {string} label ex. « 1 000 € cofinancés sur 5 000 € »
+   * @param {number} pct pourcentage entier, 0 à 100.
+   * @param {boolean} [showPercent=true] false pour une action financée :
+   *   la mention « Financée à 100 % » à côté le dit déjà.
+   */
+  function renderProgress(label, pct, showPercent = true) {
+    const percent = showPercent
+      ? `<strong class="progress-percent">${pct}&nbsp;%<span class="sr-only">&nbsp;financé</span></strong>`
+      : "";
+    return `
+          <div class="progressbar-container lcse-card-progress">
+            <p class="progress-label"><span>${escapeHtml(label)}</span>${percent}</p>
+            <div class="progress" aria-hidden="true"><div class="progress-bar" style="width:${pct}%"></div></div>
+          </div>`;
+  }
+
   function renderCard(a) {
     return `
     <article class="lcse-card">
@@ -106,10 +133,7 @@
         </dl>
 
         <div class="lcse-card-footer">
-          <div class="lcse-card-progress">
-            <p class="progress-label"><span>${escapeHtml(a.collecteLabel)}</span></p>
-            <div class="progress"><div class="progress-bar" style="width:${a.pct}%"></div></div>
-          </div>
+          ${renderProgress(a.collecteLabel, a.pct, !a.financee)}
           ${a.financee
             // Proposer de cofinancer une action déjà bouclée n'a pas de
             // sens : le bouton laisse place à la mention du résultat.
@@ -433,6 +457,7 @@
     renderEmptyState,
     renderLoadingState,
     renderCard,
+    renderProgress,
     renderTabs,
     renderTabPane,
     tabButtonId,

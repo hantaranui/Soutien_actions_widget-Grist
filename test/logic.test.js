@@ -6,17 +6,21 @@ const LCSE = require("../src/logic.js");
 
 describe("eur", () => {
   test("formate un montant en euros avec séparateur de milliers", () => {
-    assert.equal(LCSE.eur(5000), "5 000 €");
+    assert.equal(LCSE.eur(5000), "5\u00a0000\u00a0€");
   });
 
   test("gère zéro, null, undefined comme 0 €", () => {
-    assert.equal(LCSE.eur(0), "0 €");
-    assert.equal(LCSE.eur(null), "0 €");
-    assert.equal(LCSE.eur(undefined), "0 €");
+    assert.equal(LCSE.eur(0), "0\u00a0€");
+    assert.equal(LCSE.eur(null), "0\u00a0€");
+    assert.equal(LCSE.eur(undefined), "0\u00a0€");
   });
 
   test("n'utilise pas d'espace fine insécable (copier-coller/affichage)", () => {
-    assert.ok(!LCSE.eur(123456).includes(" "));
+    assert.ok(!LCSE.eur(123456).includes("\u202f"));
+  });
+
+  test("aucune espace sécable : le montant ne se coupe jamais en fin de ligne", () => {
+    assert.ok(!/ /.test(LCSE.eur(1234567)));
   });
 });
 
