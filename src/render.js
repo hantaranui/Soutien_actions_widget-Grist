@@ -457,18 +457,57 @@
     </form>`;
   }
 
-  // action: l'action ouverte, ou null si la modale est fermée.
-  function renderModal(action, uiState) {
-    const open = !!action;
+  /**
+   * Panneau de partage de la page publique. Le lien est dans un champ en
+   * lecture seule (sélectionnable à la main si la copie automatique est
+   * refusée) : un clic sur le champ ou sur « Copier » le copie. Le retour
+   * (« Lien copié ») passe par une zone de statut présente dès l'ouverture,
+   * pour être annoncé aux lecteurs d'écran (RGAA 7.5).
+   *
+   * @param {string} url
+   */
+  function renderSharePanel(url) {
+    return `
+    ${renderModalHeader("Partager la page")}
+    <div class="modal-body lcse-share-body">
+      <p>Envoyez ce lien pour faire découvrir les actions à soutenir. Il s'ouvre sans compte ni connexion.</p>
+      <label class="form-label" for="lcse-share-url">Lien de la page publique</label>
+      <div class="input-group">
+        <input class="form-control lcse-share-url" id="lcse-share-url" type="text" readonly value="${escapeHtml(url)}" data-action="copy-share" aria-describedby="lcse-share-help">
+        <div class="input-group-append">
+          <button type="button" class="btn btn-primary" id="lcse-share-copy" data-action="copy-share"><span aria-hidden="true" class="icon icon-copy"></span><span class="btn-content">Copier</span><span class="sr-only">&nbsp;le lien</span></button>
+        </div>
+      </div>
+      <p class="help-block" id="lcse-share-help">Un clic sur le lien le copie.</p>
+      <p class="lcse-share-feedback" id="lcse-share-feedback" role="status"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="lcse-share-close" class="btn btn-secondary" data-action="close"><span class="btn-content">Fermer</span></button>
+    </div>`;
+  }
+
+  // Modale de la page : formulaire de soutien d'une action, ou partage de
+  // la page (uiState.shareOpen). action : l'action ouverte, ou null.
+  function renderModal(action, uiState, shareUrl) {
+    const share = !!(uiState && uiState.shareOpen);
+    const open = !!action || share;
+    const content = !open ? ""
+      : share ? renderSharePanel(shareUrl || "")
+      : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState);
     return `
     <div class="modal-backdrop ${open ? "show" : ""}" data-action="close" ${open ? "" : "hidden"}></div>
     <div class="modal lcse-modal ${open ? "show" : ""}" role="dialog" aria-modal="true" aria-labelledby="lcse-modal-title" tabindex="-1" ${open ? "" : "hidden"}>
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ${share ? "" : "modal-lg"}">
         <div class="modal-content">
-          ${!open ? "" : uiState.sent ? renderSentPanel(action) : renderFormPanel(action, uiState)}
+          ${content}
         </div>
       </div>
     </div>`;
+  }
+
+  // Bouton « Partager », à droite du titre de la page.
+  function renderShareButton() {
+    return `<button type="button" class="btn btn-secondary lcse-share-btn" id="lcse-share-btn" data-action="share"><span aria-hidden="true" class="icon icon-share"></span><span class="btn-content">Partager</span><span class="sr-only">&nbsp;la page</span></button>`;
   }
 
   return {
@@ -487,6 +526,8 @@
     renderFilters,
     renderModal,
     renderSentPanel,
+    renderSharePanel,
+    renderShareButton,
     renderFormPanel,
     renderSupportField,
     SUPPORT_FORM_FIELDS,

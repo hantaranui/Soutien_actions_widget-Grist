@@ -436,3 +436,35 @@ describe("renderLoadMore : libellé dans .btn-content", () => {
     assert.match(html, /<button type="button" class="btn btn-secondary" data-action="load-more"><span class="btn-content">Charger 24 actions de plus<\/span><\/button>/);
   });
 });
+
+describe("partage de la page", () => {
+  const URL = "https://grist.example/p/38?pp_=cle&style=singlePage";
+
+  test("bouton « Partager » du DS, avec icône et nom explicite", () => {
+    const html = R.renderShareButton();
+    assert.match(html, /<button type="button" class="btn btn-secondary lcse-share-btn" id="lcse-share-btn" data-action="share">/);
+    assert.match(html, /<span aria-hidden="true" class="icon icon-share"><\/span><span class="btn-content">Partager<\/span><span class="sr-only">&nbsp;la page<\/span>/);
+  });
+
+  test("la modale de partage affiche le lien dans un champ en lecture seule", () => {
+    const html = R.renderModal(null, { shareOpen: true }, URL);
+    assert.match(html, /class="modal lcse-modal show" role="dialog" aria-modal="true" aria-labelledby="lcse-modal-title"/);
+    assert.match(html, /<h2 class="modal-title" id="lcse-modal-title">Partager la page<\/h2>/);
+    assert.match(html, /<input class="form-control lcse-share-url" id="lcse-share-url" type="text" readonly value="https:\/\/grist\.example\/p\/38\?pp_=cle&amp;style=singlePage" data-action="copy-share"/);
+    assert.match(html, /id="lcse-share-copy" data-action="copy-share"><span aria-hidden="true" class="icon icon-copy">/);
+  });
+
+  test("retour de copie : zone de statut présente et vide dès l'ouverture", () => {
+    const html = R.renderModal(null, { shareOpen: true }, URL);
+    assert.match(html, /<p class="lcse-share-feedback" id="lcse-share-feedback" role="status"><\/p>/);
+  });
+
+  test("modale de partage au format standard, celle du formulaire en grand", () => {
+    assert.ok(!/modal-dialog[^"]*modal-lg/.test(R.renderModal(null, { shareOpen: true }, URL)));
+    assert.match(R.renderModal(SAMPLE_ACTION, { sent: false, submitting: false, submitError: "" }), /modal-dialog[^"]*modal-lg/);
+  });
+
+  test("modale fermée quand ni action ni partage", () => {
+    assert.match(R.renderModal(null, { shareOpen: false }, URL), /class="modal lcse-modal " role="dialog"[^>]*hidden/);
+  });
+});

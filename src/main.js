@@ -20,7 +20,7 @@
   const {
     renderEmptyState, renderLoadingState, renderAlert, renderCard, renderTabs, renderTabPane, tabButtonId,
     renderLoadMore, renderFilters, renderFilterBadge, renderFilterOptions,
-    renderModal,
+    renderModal, renderShareButton,
   } = window.LCSE;
 
   // --- Accès aux pièces jointes (logos) ---------------------------------
@@ -36,6 +36,12 @@
   // publique distribuée aux visiteurs (`?pp_=lcse-soutien`). Ce sont les
   // règles d'accès du document qui décident ce qu'elle ouvre.
   const PUBLIC_LINK_KEY = "lcse-soutien";
+
+  // Adresse publique de la page, proposée par le bouton « Partager ».
+  // style=singlePage masque les menus de Grist ; pp_ est la clé de lien
+  // public (PUBLIC_LINK_KEY).
+  const PUBLIC_PAGE_URL =
+    "https://grist.numerique.gouv.fr/o/francetravail/aYxzLYFNGJSa/Partenariat-Simplifie/p/38?pp_=lcse-soutien&style=singlePage";
   // Repli quand getAccessToken n'aboutit pas (cas du visiteur anonyme) :
   // il faut bien une base d'URL. À faire évoluer en même temps que le
   // document servi par la page publique.
@@ -50,6 +56,8 @@
     fede: ALL,
     club: ALL,
     openActionId: null,
+    // Modale de partage de la page ouverte ?
+    shareOpen: false,
     // Nombre d'actions rendues : on part d'un lot, puis le bouton
     // « Charger 24 actions de plus » l'augmente. Remis à PAGE_SIZE dès
     // que la liste filtrée change (choix de filtre, réinitialisation).
@@ -161,11 +169,13 @@
     <div class="lcse-title-row">
       <div class="lcse-title-bar"></div>
       <h1 class="display-4 lcse-title">Soutenez les clubs sportifs engagés pour l'insertion par le sport</h1>
+      ${renderShareButton()}
     </div>
     ${renderFilters(FILTERS, state, activeFilterCount(state), state.filtersOpen, allFilterOptions())}
     <p class="sr-only" role="status" id="lcse-results-status"></p>
     <div id="lcse-results"></div>`;
       bindFilterEvents();
+      document.getElementById("lcse-share-btn").addEventListener("click", openShare);
       shellRendered = true;
     }
     syncFilters();
@@ -227,9 +237,9 @@
     const values = oldForm ? Object.fromEntries(new FormData(oldForm)) : null;
     const focused = modalRoot.contains(document.activeElement) ? document.activeElement.id : "";
 
-    modalRoot.innerHTML = renderModal(openAction, state);
+    modalRoot.innerHTML = renderModal(openAction, state, PUBLIC_PAGE_URL);
 
-    const open = !!openAction;
+    const open = !!openAction || state.shareOpen;
     // Le reste de la page devient inerte derrière la modale : ni clic, ni
     // tabulation, ni lecture par les lecteurs d'écran.
     app.inert = open;
@@ -271,7 +281,9 @@
       }
       if (!message) announcedError = "";
     } else if (modalWasOpen) {
-      const trigger = app.querySelector(`[data-action="support"][data-id="${modalTriggerId}"]`);
+      const trigger = modalTriggerId === SHARE_TRIGGER
+        ? document.getElementById("lcse-share-btn")
+        : app.querySelector(`[data-action="support"][data-id="${modalTriggerId}"]`);
       // Si le bouton n'existe plus, on se rabat sur le titre de la page.
       const fallback = app.querySelector("h1");
       if (trigger) trigger.focus();
@@ -286,6 +298,49 @@
     )).filter((el) => el.offsetParent !== null || el === document.activeElement);
   }
 
+  // Déclencheur de la modale de partage, pour le retour du focus.
+  const SHARE_TRIGGER = "share";
+
+  function isModalOpen() {
+    return state.openActionId !== null || state.shareOpen;
+  }
+
+  function openShare() {
+    modalTriggerId = SHARE_TRIGGER;
+    state.shareOpen = true;
+    render();
+  }
+
+  // Copie le lien de la page publique. execCommand d'abord : dans l'iframe
+  // de Grist, l'API Clipboard est souvent refusée faute d'autorisation
+  // (clipboard-write) ; execCommand, sur le champ sélectionné, fonctionne
+  // tant que l'on est dans le geste de l'utilisateur. Si les deux échouent,
+  // le lien reste sélectionné et le message dit comment le copier.
+  async function copyShareUrl() {
+    const input = document.getElementById("lcse-share-url");
+    const feedback = document.getElementById("lcse-share-feedback");
+    if (!input || !feedback) return;
+    input.focus();
+    input.select();
+    let copied = false;
+    try { copied = document.execCommand("copy"); } catch (err) { copied = false; }
+    if (!copied && navigator.clipboard) {
+      // Dans une iframe sans autorisation, la promesse peut ne jamais se
+      // résoudre (demande de permission en attente) : au-delà d'une
+      // seconde, on considère la copie comme refusée.
+      const timeout = new Promise((resolve) => setTimeout(() => resolve(false), 1000));
+      const write = navigator.clipboard.writeText(PUBLIC_PAGE_URL).then(() => true, () => false);
+      copied = await Promise.race([write, timeout]);
+    }
+    const message = copied
+      ? "Lien copié. Il ne reste plus qu'à le coller dans votre message."
+      : "La copie automatique n'est pas disponible ici : le lien est sélectionné, copiez-le avec Ctrl+C (⌘+C sur Mac).";
+    // Vidé puis rempli : un même message répété est annoncé à nouveau.
+    feedback.textContent = "";
+    feedback.classList.toggle("is-copied", copied);
+    setTimeout(() => { feedback.textContent = message; }, 50);
+  }
+
   function openModal(actionId) {
     modalTriggerId = actionId;
     state.openActionId = actionId;
@@ -297,6 +352,7 @@
 
   function closeModal() {
     state.openActionId = null;
+    state.shareOpen = false;
     state.sent = false;
     state.submitError = "";
     state.fieldErrors = {};
@@ -324,7 +380,7 @@
   // Écouteur unique (le document n'est jamais re-rendu) : Échap ferme la
   // modale, Tab et Maj+Tab bouclent à l'intérieur.
   document.addEventListener("keydown", (e) => {
-    if (state.openActionId === null) return;
+    if (!isModalOpen()) return;
     if (e.key === "Escape") {
       e.preventDefault();
       closeModal();
@@ -397,6 +453,10 @@
 
     modalRoot.querySelectorAll('[data-action="close"]').forEach((el) => {
       el.addEventListener("click", closeModal);
+    });
+
+    modalRoot.querySelectorAll('[data-action="copy-share"]').forEach((el) => {
+      el.addEventListener("click", copyShareUrl);
     });
 
     const modalContent = modalRoot.querySelector(".modal-content");

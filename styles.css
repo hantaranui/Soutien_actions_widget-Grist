@@ -183,6 +183,35 @@ html, body {
 /* Taille, graisse et adaptation à l'écran : classe .display-4 du DS. */
 .lcse-title {
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Bouton « Partager » : à droite du titre, centré sur sa première ligne. */
+.lcse-share-btn {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.lcse-share-btn .icon,
+#lcse-share-copy .icon {
+  margin-right: var(--ft-spacer-xs2, 0.5rem);
+}
+
+/* Lien de partage : champ en lecture seule, cliquable pour copier. */
+.lcse-share-url {
+  cursor: copy;
+}
+
+.lcse-share-feedback {
+  margin: var(--ft-spacer-xs2, 0.5rem) 0 0;
+  min-height: 1.5em;
+  font-size: var(--ft-font-size-text-small, 0.875rem);
+  font-weight: 700;
+}
+
+.lcse-share-feedback.is-copied {
+  color: var(--ft-color-text-success-default, #068148);
 }
 
 /* Filtres : composant Collapse du Design System, variante « Filtre »
@@ -528,7 +557,8 @@ html, body {
 }
 
 .lcse-modal .modal-body.lcse-form-body,
-.lcse-modal .modal-body.lcse-sent-body {
+.lcse-modal .modal-body.lcse-sent-body,
+.lcse-modal .modal-body.lcse-share-body {
   padding-top: var(--ft-spacer-m2, 1.5rem);
 }
 
@@ -602,7 +632,8 @@ html, body {
   }
 
   .lcse-modal .modal-body.lcse-form-body,
-  .lcse-modal .modal-body.lcse-sent-body {
+  .lcse-modal .modal-body.lcse-sent-body,
+  .lcse-modal .modal-body.lcse-share-body {
     padding: var(--ft-spacer-s2, 1rem);
   }
 }
