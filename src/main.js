@@ -45,8 +45,10 @@
   // Repli quand getAccessToken n'aboutit pas (cas du visiteur anonyme) :
   // il faut bien une base d'URL. À faire évoluer en même temps que le
   // document servi par la page publique.
+  // Document « Partenariat Simplifié » de grist.numerique.gouv.fr, celui
+  // de PUBLIC_PAGE_URL ci-dessus (même identifiant, aYxzLYFNGJSa).
   const ATTACHMENTS_BASE_URL =
-    "https://grist.aucarre.tech/o/docs/api/docs/79GCxUFdb7Py";
+    "https://grist.numerique.gouv.fr/o/francetravail/api/docs/aYxzLYFNGJSa";
 
   const state = {
     // Onglet d'arrivée : les actions encore à financer, but du widget.

@@ -104,13 +104,13 @@ describe("rowsFromColumnTable / indexById", () => {
 });
 
 describe("photoUrlFor", () => {
-  const token = { baseUrl: "https://grist.aucarre.tech/api/docs/DOC", token: "abc123" };
+  const token = { baseUrl: "https://grist.numerique.gouv.fr/api/docs/DOC", token: "abc123" };
 
   test("construit l'URL de téléchargement depuis Structures.Logo", () => {
     const structure = { Logo: ["L", 42] };
     assert.equal(
       LCSE.photoUrlFor(structure, token),
-      "https://grist.aucarre.tech/api/docs/DOC/attachments/42/download?auth=abc123"
+      "https://grist.numerique.gouv.fr/api/docs/DOC/attachments/42/download?auth=abc123"
     );
   });
 
@@ -132,7 +132,7 @@ describe("photoUrlFor", () => {
   });
 
   test("Logo_url vide ou non http(s) est ignorée (anti-injection)", () => {
-    const attach = "https://grist.aucarre.tech/api/docs/DOC/attachments/42/download?auth=abc123";
+    const attach = "https://grist.numerique.gouv.fr/api/docs/DOC/attachments/42/download?auth=abc123";
     assert.equal(LCSE.photoUrlFor({ Logo_url: "", Logo: ["L", 42] }, token), attach);
     assert.equal(LCSE.photoUrlFor({ Logo_url: "javascript:alert(1)", Logo: ["L", 42] }, token), attach);
     assert.equal(LCSE.photoUrlFor({ Logo_url: "data:image/png;base64,AAAA" }, null), null);
@@ -142,10 +142,10 @@ describe("photoUrlFor", () => {
   // Sur la page publique le visiteur est anonyme : getAccessToken n'aboutit
   // pas, et seule la clé de lien de l'URL autorise le téléchargement.
   test("la clé de lien autorise le téléchargement sans jeton", () => {
-    const access = { baseUrl: "https://grist.aucarre.tech/api/docs/DOC", linkKey: "lcse-soutien" };
+    const access = { baseUrl: "https://grist.numerique.gouv.fr/api/docs/DOC", linkKey: "lcse-soutien" };
     assert.equal(
       LCSE.photoUrlFor({ Logo: ["L", 42] }, access),
-      "https://grist.aucarre.tech/api/docs/DOC/attachments/42/download?pp_=lcse-soutien"
+      "https://grist.numerique.gouv.fr/api/docs/DOC/attachments/42/download?pp_=lcse-soutien"
     );
   });
 
