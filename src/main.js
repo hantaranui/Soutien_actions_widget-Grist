@@ -14,7 +14,8 @@
     ALL, TABLES, PAGE_SIZE, TABS, TAB_OPEN,
     getFilterOptions, buildActions, paginate, actionsForTab, countLabelFor,
     SUPPORT_FIELDS, parseMontant, validateSupportForm, FILTERS,
-    filterSuggestions, activeFilterCount,
+    filterSuggestions, activeFilterCount, filterValueLabel,
+    filterValueFromLabel,
   } = window.LCSE;
   const {
     renderEmptyState, renderLoadingState, renderAlert, renderCard, renderTabs, renderTabPane, tabButtonId,
@@ -440,10 +441,11 @@
       const field = document.getElementById(`lcse-filter-${f.key}`);
       if (!field) continue;
       if (!f.search) {
-        field.innerHTML = renderFilterOptions(options[f.key] || [], state[f.key]);
+        field.innerHTML = renderFilterOptions(f.key, options[f.key] || [], state[f.key]);
         field.value = state[f.key];
-      } else if (field !== document.activeElement && field.value !== state[f.key]) {
-        field.value = state[f.key];
+      } else {
+        const shown = filterValueLabel(f.key, state[f.key]);
+        if (field !== document.activeElement && field.value !== shown) field.value = shown;
       }
     }
     const badge = document.getElementById("lcse-filters-count");
@@ -467,8 +469,11 @@
       if (!key) return;
       // Propriété posée avant même que le webcomponent soit chargé : elle
       // prime sur la méthode par défaut du composant.
+      // Le composant affiche et renvoie des libellés : « Tous » plutôt que
+      // la valeur interne, reconvertie au choix (ft-autocomplete-change).
       el.searchCallback = (text) => {
-        const found = filterSuggestions(filterOptions(key), text, state[key]);
+        const labels = filterOptions(key).map((o) => filterValueLabel(key, o));
+        const found = filterSuggestions(labels, text, filterValueLabel(key, state[key]));
         return found.length ? found.map((name) => ({ name })) : ["empty"];
       };
     });
@@ -476,7 +481,7 @@
     app.addEventListener("ft-autocomplete-change", (e) => {
       const input = document.getElementById(e.target.getAttribute("input-id"));
       const key = input && input.dataset.filter;
-      if (key && e.detail && e.detail.name) selectFilterValue(key, e.detail.name);
+      if (key && e.detail && e.detail.name) selectFilterValue(key, filterValueFromLabel(key, e.detail.name));
     });
 
     // Listes déroulantes : le choix s'applique dès qu'il change.
@@ -495,7 +500,7 @@
       setTimeout(() => {
         if (document.activeElement === input) return;
         if (!input.value.trim()) selectFilterValue(key, ALL);
-        else if (input.value !== state[key]) input.value = state[key];
+        else if (input.value !== filterValueLabel(key, state[key])) input.value = filterValueLabel(key, state[key]);
       }, 150);
     });
 
@@ -507,7 +512,7 @@
         // vide ici explicitement, la réinitialisation vaut pour tous.
         FILTERS.filter((f) => f.search).forEach((f) => {
           const input = document.getElementById(`lcse-filter-${f.key}`);
-          if (input) input.value = ALL;
+          if (input) input.value = filterValueLabel(f.key, ALL);
         });
         // L'onglet n'est pas un filtre : "Réinitialiser" ne le change pas.
         render();

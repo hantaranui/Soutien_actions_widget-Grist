@@ -330,14 +330,14 @@ describe("getFilterOptions", () => {
     { regionLabel: "Île-de-France", deptLabel: "DD Paris", federationLabel: "Rugby", clubLabel: "PUC Rugby" },
   ];
 
-  test("liste toutes les régions, préfixées par 'Toutes' et triées", () => {
+  test("liste toutes les régions, précédées de l'option « sans filtre » et triées", () => {
     const opts = LCSE.getFilterOptions(actions, { region: LCSE.ALL });
-    assert.deepEqual(opts.region, ["Toutes", "Île-de-France", "Nouvelle-Aquitaine"]);
+    assert.deepEqual(opts.region, [LCSE.ALL, "Île-de-France", "Nouvelle-Aquitaine"]);
   });
 
   test("le département est restreint à la région sélectionnée", () => {
     const opts = LCSE.getFilterOptions(actions, { region: "Nouvelle-Aquitaine" });
-    assert.deepEqual(opts.dept, ["Toutes", "DD Corrèze", "DD Gironde"]);
+    assert.deepEqual(opts.dept, [LCSE.ALL, "DD Corrèze", "DD Gironde"]);
   });
 
   test("fédération et club restent globaux, même avec une région sélectionnée", () => {
@@ -616,5 +616,27 @@ describe("FILTERS", () => {
 
   test("recherche à la frappe réservée au club", () => {
     assert.deepEqual(LCSE.FILTERS.filter((f) => f.search).map((f) => f.key), ["club"]);
+  });
+});
+
+describe("filterValueLabel / filterValueFromLabel", () => {
+  test("« Tous » ou « Toutes » selon le genre du filtre", () => {
+    assert.equal(LCSE.filterValueLabel("region", LCSE.ALL), "Toutes");
+    assert.equal(LCSE.filterValueLabel("dept", LCSE.ALL), "Tous");
+    assert.equal(LCSE.filterValueLabel("fede", LCSE.ALL), "Toutes");
+    assert.equal(LCSE.filterValueLabel("club", LCSE.ALL), "Tous");
+  });
+
+  test("une vraie valeur s'affiche telle quelle", () => {
+    assert.equal(LCSE.filterValueLabel("dept", "DD Gers"), "DD Gers");
+  });
+
+  test("chemin inverse : le libellé redonne la valeur interne", () => {
+    assert.equal(LCSE.filterValueFromLabel("club", "Tous"), LCSE.ALL);
+    assert.equal(LCSE.filterValueFromLabel("club", "CA Brive"), "CA Brive");
+  });
+
+  test("la valeur interne n'est pas un mot affichable", () => {
+    assert.ok(!["Tous", "Toutes"].includes(LCSE.ALL));
   });
 });

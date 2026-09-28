@@ -17,7 +17,7 @@
 })(typeof window !== "undefined" ? window : globalThis, function (logic) {
   "use strict";
 
-  const { escapeHtml } = logic;
+  const { escapeHtml, filterValueLabel } = logic;
 
   // Squelette d'une carte d'action, calqué sur sa structure (date, titre,
   // club, métadonnées, jauge) pour que la grille ne saute pas à l'arrivée
@@ -250,10 +250,12 @@
   // Options d'un filtre en liste déroulante. La valeur retenue est ajoutée
   // si elle manque (elle peut ne plus figurer parmi les options de l'onglet
   // courant) : sans cela, le navigateur afficherait la première option.
-  function renderFilterOptions(options, selected) {
+  // L'option « sans filtre » affiche le libellé du filtre (« Tous » /
+  // « Toutes »), sa valeur restant la valeur interne.
+  function renderFilterOptions(key, options, selected) {
     const list = options.includes(selected) ? options : [selected, ...options];
     return list
-      .map((o) => `<option value="${escapeHtml(o)}"${o === selected ? " selected" : ""}>${escapeHtml(o)}</option>`)
+      .map((o) => `<option value="${escapeHtml(o)}"${o === selected ? " selected" : ""}>${escapeHtml(filterValueLabel(key, o))}</option>`)
       .join("");
   }
 
@@ -274,14 +276,14 @@
       return `
         <div class="lcse-filter">
           <label class="form-label" for="${id}">${escapeHtml(label)}</label>
-          <select class="form-control" data-filter="${key}" id="${id}" name="${key}">${renderFilterOptions(options || [], value)}</select>
+          <select class="form-control" data-filter="${key}" id="${id}" name="${key}">${renderFilterOptions(key, options || [], value)}</select>
         </div>`;
     }
     return `
         <div class="autocomplete">
           <label class="form-label" for="${id}">${escapeHtml(label)}</label>
           <div class="form-control-wrapper">
-            <input class="form-control autocomplete-input" data-autocomplete="true" data-filter="${key}" id="${id}" name="${key}" placeholder=" " type="text" autocomplete="off" value="${escapeHtml(value)}">
+            <input class="form-control autocomplete-input" data-autocomplete="true" data-filter="${key}" id="${id}" name="${key}" placeholder=" " type="text" autocomplete="off" value="${escapeHtml(filterValueLabel(key, value))}">
             <ft-autocomplete input-id="${id}" label-property="name"></ft-autocomplete>
           </div>
         </div>`;

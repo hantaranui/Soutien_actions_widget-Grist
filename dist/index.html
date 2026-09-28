@@ -661,7 +661,10 @@ html, body {
 (function (root) {
   "use strict";
 
-  const ALL = "Toutes";
+  // Valeur interne d'un filtre qui ne restreint rien. Neutre et jamais
+  // affichée telle quelle : chaque filtre a son libellé, accordé en genre
+  // (FILTERS[].allLabel, voir filterValueLabel).
+  const ALL = "__tous__";
 
   const TABLES = {
     actions: "Actions",
@@ -678,12 +681,26 @@ html, body {
   // Libellés des filtres, dans l'ordre d'affichage. search : champ avec
   // recherche à la frappe (Autocomplete du DS) plutôt qu'une liste
   // déroulante (Select), réservé à la liste des clubs, la seule longue.
+  // allLabel : libellé de l'option « sans filtre », accordé au nom du
+  // filtre (« Toutes » les régions, « Tous » les départements).
   const FILTERS = [
-    { key: "region", label: "Région" },
-    { key: "dept", label: "Département" },
-    { key: "fede", label: "Fédération" },
-    { key: "club", label: "Club", search: true },
+    { key: "region", label: "Région", allLabel: "Toutes" },
+    { key: "dept", label: "Département", allLabel: "Tous" },
+    { key: "fede", label: "Fédération", allLabel: "Toutes" },
+    { key: "club", label: "Club", allLabel: "Tous", search: true },
   ];
+
+  // Libellé affiché pour une valeur de filtre, et chemin inverse (texte d'un
+  // champ → valeur). Seule l'option « sans filtre » diffère de sa valeur.
+  function filterValueLabel(key, value) {
+    if (value !== ALL) return value;
+    const f = FILTERS.find((x) => x.key === key);
+    return f ? f.allLabel : value;
+  }
+
+  function filterValueFromLabel(key, text) {
+    return text === filterValueLabel(key, ALL) ? ALL : text;
+  }
 
   // Les deux onglets. TAB_OPEN est celui d'arrivée : c'est la raison d'être
   // du widget (trouver une action à cofinancer) ; TAB_FUNDED sert à montrer
@@ -1105,6 +1122,8 @@ html, body {
     TABLES,
     FILTER_KEYS,
     FILTERS,
+    filterValueLabel,
+    filterValueFromLabel,
     filterSuggestions,
     activeFilterCount,
     PAGE_SIZE,
@@ -1160,7 +1179,7 @@ html, body {
 })(typeof window !== "undefined" ? window : globalThis, function (logic) {
   "use strict";
 
-  const { escapeHtml } = logic;
+  const { escapeHtml, filterValueLabel } = logic;
 
   // Squelette d'une carte d'action, calqué sur sa structure (date, titre,
   // club, métadonnées, jauge) pour que la grille ne saute pas à l'arrivée
@@ -1393,10 +1412,12 @@ html, body {
   // Options d'un filtre en liste déroulante. La valeur retenue est ajoutée
   // si elle manque (elle peut ne plus figurer parmi les options de l'onglet
   // courant) : sans cela, le navigateur afficherait la première option.
-  function renderFilterOptions(options, selected) {
+  // L'option « sans filtre » affiche le libellé du filtre (« Tous » /
+  // « Toutes »), sa valeur restant la valeur interne.
+  function renderFilterOptions(key, options, selected) {
     const list = options.includes(selected) ? options : [selected, ...options];
     return list
-      .map((o) => `<option value="${escapeHtml(o)}"${o === selected ? " selected" : ""}>${escapeHtml(o)}</option>`)
+      .map((o) => `<option value="${escapeHtml(o)}"${o === selected ? " selected" : ""}>${escapeHtml(filterValueLabel(key, o))}</option>`)
       .join("");
   }
 
@@ -1417,14 +1438,14 @@ html, body {
       return `
         <div class="lcse-filter">
           <label class="form-label" for="${id}">${escapeHtml(label)}</label>
-          <select class="form-control" data-filter="${key}" id="${id}" name="${key}">${renderFilterOptions(options || [], value)}</select>
+          <select class="form-control" data-filter="${key}" id="${id}" name="${key}">${renderFilterOptions(key, options || [], value)}</select>
         </div>`;
     }
     return `
         <div class="autocomplete">
           <label class="form-label" for="${id}">${escapeHtml(label)}</label>
           <div class="form-control-wrapper">
-            <input class="form-control autocomplete-input" data-autocomplete="true" data-filter="${key}" id="${id}" name="${key}" placeholder=" " type="text" autocomplete="off" value="${escapeHtml(value)}">
+            <input class="form-control autocomplete-input" data-autocomplete="true" data-filter="${key}" id="${id}" name="${key}" placeholder=" " type="text" autocomplete="off" value="${escapeHtml(filterValueLabel(key, value))}">
             <ft-autocomplete input-id="${id}" label-property="name"></ft-autocomplete>
           </div>
         </div>`;
@@ -1652,7 +1673,8 @@ html, body {
     ALL, TABLES, PAGE_SIZE, TABS, TAB_OPEN,
     getFilterOptions, buildActions, paginate, actionsForTab, countLabelFor,
     SUPPORT_FIELDS, parseMontant, validateSupportForm, FILTERS,
-    filterSuggestions, activeFilterCount,
+    filterSuggestions, activeFilterCount, filterValueLabel,
+    filterValueFromLabel,
   } = window.LCSE;
   const {
     renderEmptyState, renderLoadingState, renderAlert, renderCard, renderTabs, renderTabPane, tabButtonId,
@@ -2078,10 +2100,11 @@ html, body {
       const field = document.getElementById(`lcse-filter-${f.key}`);
       if (!field) continue;
       if (!f.search) {
-        field.innerHTML = renderFilterOptions(options[f.key] || [], state[f.key]);
+        field.innerHTML = renderFilterOptions(f.key, options[f.key] || [], state[f.key]);
         field.value = state[f.key];
-      } else if (field !== document.activeElement && field.value !== state[f.key]) {
-        field.value = state[f.key];
+      } else {
+        const shown = filterValueLabel(f.key, state[f.key]);
+        if (field !== document.activeElement && field.value !== shown) field.value = shown;
       }
     }
     const badge = document.getElementById("lcse-filters-count");
@@ -2105,8 +2128,11 @@ html, body {
       if (!key) return;
       // Propriété posée avant même que le webcomponent soit chargé : elle
       // prime sur la méthode par défaut du composant.
+      // Le composant affiche et renvoie des libellés : « Tous » plutôt que
+      // la valeur interne, reconvertie au choix (ft-autocomplete-change).
       el.searchCallback = (text) => {
-        const found = filterSuggestions(filterOptions(key), text, state[key]);
+        const labels = filterOptions(key).map((o) => filterValueLabel(key, o));
+        const found = filterSuggestions(labels, text, filterValueLabel(key, state[key]));
         return found.length ? found.map((name) => ({ name })) : ["empty"];
       };
     });
@@ -2114,7 +2140,7 @@ html, body {
     app.addEventListener("ft-autocomplete-change", (e) => {
       const input = document.getElementById(e.target.getAttribute("input-id"));
       const key = input && input.dataset.filter;
-      if (key && e.detail && e.detail.name) selectFilterValue(key, e.detail.name);
+      if (key && e.detail && e.detail.name) selectFilterValue(key, filterValueFromLabel(key, e.detail.name));
     });
 
     // Listes déroulantes : le choix s'applique dès qu'il change.
@@ -2133,7 +2159,7 @@ html, body {
       setTimeout(() => {
         if (document.activeElement === input) return;
         if (!input.value.trim()) selectFilterValue(key, ALL);
-        else if (input.value !== state[key]) input.value = state[key];
+        else if (input.value !== filterValueLabel(key, state[key])) input.value = filterValueLabel(key, state[key]);
       }, 150);
     });
 
@@ -2145,7 +2171,7 @@ html, body {
         // vide ici explicitement, la réinitialisation vaut pour tous.
         FILTERS.filter((f) => f.search).forEach((f) => {
           const input = document.getElementById(`lcse-filter-${f.key}`);
-          if (input) input.value = ALL;
+          if (input) input.value = filterValueLabel(f.key, ALL);
         });
         // L'onglet n'est pas un filtre : "Réinitialiser" ne le change pas.
         render();

@@ -85,8 +85,9 @@ describe("renderFilters", () => {
     { key: "region", label: "Région" },
     { key: "club", label: "Club", search: true },
   ];
-  const values = { region: "Occitanie", club: "Toutes" };
-  const options = { region: ["Toutes", "Nouvelle-Aquitaine", "Occitanie"] };
+  const { ALL } = require("../src/logic.js");
+  const values = { region: "Occitanie", club: ALL };
+  const options = { region: [ALL, "Nouvelle-Aquitaine", "Occitanie"] };
 
   test("bloc repliable du Design System, variante Filtre", () => {
     const html = R.renderFilters(FILTERS, values, 1, true, options);
@@ -113,7 +114,7 @@ describe("renderFilters", () => {
   test("filtre avec recherche (club) : Autocomplete du Design System", () => {
     const html = R.renderFilters(FILTERS, values, 0, true, options);
     assert.match(html, /<div class="autocomplete">\s*<label class="form-label" for="lcse-filter-club">Club<\/label>\s*<div class="form-control-wrapper">/);
-    assert.match(html, /<input class="form-control autocomplete-input" data-autocomplete="true" data-filter="club" id="lcse-filter-club"[^>]*value="Toutes">/);
+    assert.match(html, /<input class="form-control autocomplete-input" data-autocomplete="true" data-filter="club" id="lcse-filter-club"[^>]*value="Tous">/);
     assert.match(html, /<ft-autocomplete input-id="lcse-filter-club" label-property="name"><\/ft-autocomplete>/);
   });
 
@@ -123,20 +124,24 @@ describe("renderFilters", () => {
   });
 
   test("valeurs échappées", () => {
-    const html = R.renderFilters(FILTERS, { region: "Toutes", club: '"><b>' }, 0, true, options);
+    const html = R.renderFilters(FILTERS, { region: ALL, club: '"><b>' }, 0, true, options);
     assert.match(html, /value="&quot;&gt;&lt;b&gt;"/);
   });
 });
 
 describe("renderFilterOptions", () => {
+  const { ALL } = require("../src/logic.js");
   test("une option par valeur, la valeur retenue sélectionnée", () => {
-    assert.equal(R.renderFilterOptions(["Toutes", "A"], "A"), '<option value="Toutes">Toutes</option><option value="A" selected>A</option>');
+    assert.equal(R.renderFilterOptions("region", [ALL, "A"], "A"), `<option value="${ALL}">Toutes</option><option value="A" selected>A</option>`);
+  });
+  test("option « sans filtre » accordée : « Tous » pour un nom masculin", () => {
+    assert.match(R.renderFilterOptions("dept", [ALL, "DD Gers"], ALL), new RegExp(`^<option value="${ALL}" selected>Tous</option>`));
   });
   test("valeur retenue absente des options : ajoutée en tête", () => {
-    assert.match(R.renderFilterOptions(["Toutes", "A"], "B"), /^<option value="B" selected>B<\/option><option value="Toutes">/);
+    assert.match(R.renderFilterOptions("region", [ALL, "A"], "B"), new RegExp(`^<option value="B" selected>B</option><option value="${ALL}">`));
   });
   test("échappe les valeurs", () => {
-    assert.match(R.renderFilterOptions(["<x>"], "<x>"), /<option value="&lt;x&gt;" selected>&lt;x&gt;<\/option>/);
+    assert.match(R.renderFilterOptions("fede", ["<x>"], "<x>"), /<option value="&lt;x&gt;" selected>&lt;x&gt;<\/option>/);
   });
 });
 

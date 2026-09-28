@@ -15,7 +15,10 @@
 (function (root) {
   "use strict";
 
-  const ALL = "Toutes";
+  // Valeur interne d'un filtre qui ne restreint rien. Neutre et jamais
+  // affichée telle quelle : chaque filtre a son libellé, accordé en genre
+  // (FILTERS[].allLabel, voir filterValueLabel).
+  const ALL = "__tous__";
 
   const TABLES = {
     actions: "Actions",
@@ -32,12 +35,26 @@
   // Libellés des filtres, dans l'ordre d'affichage. search : champ avec
   // recherche à la frappe (Autocomplete du DS) plutôt qu'une liste
   // déroulante (Select), réservé à la liste des clubs, la seule longue.
+  // allLabel : libellé de l'option « sans filtre », accordé au nom du
+  // filtre (« Toutes » les régions, « Tous » les départements).
   const FILTERS = [
-    { key: "region", label: "Région" },
-    { key: "dept", label: "Département" },
-    { key: "fede", label: "Fédération" },
-    { key: "club", label: "Club", search: true },
+    { key: "region", label: "Région", allLabel: "Toutes" },
+    { key: "dept", label: "Département", allLabel: "Tous" },
+    { key: "fede", label: "Fédération", allLabel: "Toutes" },
+    { key: "club", label: "Club", allLabel: "Tous", search: true },
   ];
+
+  // Libellé affiché pour une valeur de filtre, et chemin inverse (texte d'un
+  // champ → valeur). Seule l'option « sans filtre » diffère de sa valeur.
+  function filterValueLabel(key, value) {
+    if (value !== ALL) return value;
+    const f = FILTERS.find((x) => x.key === key);
+    return f ? f.allLabel : value;
+  }
+
+  function filterValueFromLabel(key, text) {
+    return text === filterValueLabel(key, ALL) ? ALL : text;
+  }
 
   // Les deux onglets. TAB_OPEN est celui d'arrivée : c'est la raison d'être
   // du widget (trouver une action à cofinancer) ; TAB_FUNDED sert à montrer
@@ -459,6 +476,8 @@
     TABLES,
     FILTER_KEYS,
     FILTERS,
+    filterValueLabel,
+    filterValueFromLabel,
     filterSuggestions,
     activeFilterCount,
     PAGE_SIZE,
