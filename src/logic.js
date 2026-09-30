@@ -222,6 +222,23 @@
     return String(value ?? "").trim().toLocaleLowerCase("fr-FR") === "oui";
   }
 
+  /**
+   * Lecture de la colonne Actions.Corbeille : une action y est envoyée par
+   * suppression logique (elle n'est jamais retirée de Grist), et ne doit
+   * plus apparaître nulle part sur la page publique. C'est aujourd'hui une
+   * case à cocher (Bool) : true = en corbeille. On tolère aussi le texte
+   * "oui" (insensible à la casse), au cas où la colonne redeviendrait un
+   * Choice/texte — le widget continuerait de filtrer correctement sans
+   * modification, comme pour isOuvertAuFinancement.
+   *
+   * Vide, false, "non" ou toute autre valeur vaut "pas en corbeille" :
+   * une action n'est écartée que sur décision explicite.
+   */
+  function isEnCorbeille(value) {
+    if (value === true || value === 1) return true;
+    return String(value ?? "").trim().toLocaleLowerCase("fr-FR") === "oui";
+  }
+
   // La ville est une saisie libre portée par l'action (colonne texte
   // Actions.Ville) : ni le club ni l'agence France Travail ne la
   // déterminent. Elle peut donc être vide, d'où le repli.
@@ -275,7 +292,10 @@
    * (Club, Fédération, DR, DD), calcul de la jauge de financement à
    * partir de Cofinancements, et labels formatés en français.
    *
-   * Seul le statut retire une action du résultat : "Réalisée" ou "Annulée".
+   * Le statut retire une action du résultat ("Réalisée" ou "Annulée"), de
+   * même que la corbeille (suppression logique, colonne Actions.Corbeille) :
+   * une action en corbeille n'apparaît plus nulle part sur la page
+   * publique, quel que soit son statut ou son financement.
    * La case "Ouvert au financement" ne filtre pas ici mais est reportée sur
    * chaque action (`ouvertAuFinancement`) : c'est actionsForTab qui s'en
    * sert, l'onglet des actions déjà financées n'ayant pas à l'appliquer.
@@ -311,6 +331,10 @@
     // sortByDateAsc en sortie : l'ordre chronologique vaut pour les deux
     // onglets et pour la pagination, qui découpe cette liste telle quelle.
     return sortByDateAsc(rawActions
+      // Une action en corbeille est écartée avant toute jointure : elle ne
+      // doit alimenter ni les listes, ni les compteurs, ni les filtres, ni
+      // le calcul du financement.
+      .filter((a) => !isEnCorbeille(a.Corbeille))
       .map((a) => {
         const dr = a.DR ? drMap.get(a.DR) : null;
         const dd = a.DD ? ddMap.get(a.DD) : null;
@@ -494,6 +518,7 @@
     indexById,
     photoUrlFor,
     isOuvertAuFinancement,
+    isEnCorbeille,
     buildActions,
     sortByDateAsc,
     actionsForTab,
