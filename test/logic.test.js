@@ -321,6 +321,31 @@ describe("buildActions", () => {
     assert.equal(actions.find((a) => a.id === 2), undefined, "Annulée doit être exclue");
     assert.ok(actions.find((a) => a.id === 3), "A confirmer doit rester visible");
   });
+
+  test("Corbeille cochée (true) -> l'action n'apparaît plus du tout", () => {
+    const tables = fixtureTables();
+    tables.actionsT.Corbeille = [true, false, false];
+    const actions = LCSE.buildActions(tables, null);
+    assert.equal(actions.find((a) => a.id === 1), undefined, "action en corbeille doit être exclue");
+    assert.ok(actions.find((a) => a.id === 2), "action 2 non concernée doit rester visible");
+    assert.ok(actions.find((a) => a.id === 3), "action 3 non concernée doit rester visible");
+  });
+
+  test("Corbeille en texte \"Oui\" -> l'action n'apparaît plus du tout", () => {
+    const tables = fixtureTables();
+    tables.actionsT.Corbeille = ["oui", "Non", ""];
+    const actions = LCSE.buildActions(tables, null);
+    assert.equal(actions.find((a) => a.id === 1), undefined, "action en corbeille (texte \"oui\") doit être exclue");
+    assert.ok(actions.find((a) => a.id === 2), "action 2 (\"Non\") doit rester visible");
+    assert.ok(actions.find((a) => a.id === 3), "action 3 (vide) doit rester visible");
+  });
+
+  test("une action normale (Corbeille vide/false) reste toujours affichée", () => {
+    const actions = LCSE.buildActions(fixtureTables(), null); // fixture sans colonne Corbeille du tout
+    assert.ok(actions.find((a) => a.id === 1), "sans colonne Corbeille, aucune action ne doit être exclue à tort");
+    assert.ok(actions.find((a) => a.id === 2));
+    assert.ok(actions.find((a) => a.id === 3));
+  });
 });
 
 describe("getFilterOptions", () => {
@@ -453,6 +478,28 @@ describe("isOuvertAuFinancement", () => {
     assert.equal(LCSE.isOuvertAuFinancement(""), false);
     assert.equal(LCSE.isOuvertAuFinancement("Non"), false);
     assert.equal(LCSE.isOuvertAuFinancement(0), false);
+  });
+});
+
+describe("isEnCorbeille", () => {
+  test("la case cochée met l'action en corbeille", () => {
+    assert.equal(LCSE.isEnCorbeille(true), true);
+    assert.equal(LCSE.isEnCorbeille(1), true);
+  });
+
+  test("le texte \"Oui\" est accepté (au cas où la colonne redeviendrait un Choice)", () => {
+    assert.equal(LCSE.isEnCorbeille("Oui"), true);
+    assert.equal(LCSE.isEnCorbeille("oui"), true);
+    assert.equal(LCSE.isEnCorbeille(" OUI "), true);
+  });
+
+  test("tout le reste vaut \"pas en corbeille\"", () => {
+    assert.equal(LCSE.isEnCorbeille(false), false);
+    assert.equal(LCSE.isEnCorbeille(null), false);
+    assert.equal(LCSE.isEnCorbeille(undefined), false);
+    assert.equal(LCSE.isEnCorbeille(""), false);
+    assert.equal(LCSE.isEnCorbeille("Non"), false);
+    assert.equal(LCSE.isEnCorbeille(0), false);
   });
 });
 
