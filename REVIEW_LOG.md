@@ -31,8 +31,7 @@ Ce que j'ai fait corriger : sans objet
 Tests : 0 lancés, 0 réussis (installation, pas de code)
 Fichiers modifiés : CLAUDE.md, REVIEW_LOG.md, .claude/agents/ (9 fichiers), docs/design-system-france-travail.md
 Build refait : pas nécessaire
-Commit : chore: installer la squad d'agents (Sprint 0 du widget Soutien)
-
+Commit : 43759ae — chore: installer la squad d'agents (Sprint 0 du widget Soutien)
 
 ## Tâche 2 — Fiche de conception : bandeau commun sur la page publique
 
@@ -46,8 +45,7 @@ Ce que j'ai fait corriger : rien. Décisions : logos en double acceptés pour le
 Tests : 154 lancés, 154 réussis (avant changement)
 Fichiers modifiés : docs/ux/bandeau-commun-page-publique.md (créé)
 Build refait : pas nécessaire
-Commit : à faire avec le code
-
+Commit : 0b1c095 — docs: fiche UX et journal du bandeau commun sur la page publique
 
 ## Tâche 3 — Ajout de la balise du bandeau commun sur la page publique
 
@@ -61,4 +59,19 @@ Ce que j'ai fait corriger : rien. Accepté : dist/index.html remis en accord ave
 Tests : 154 lancés, 154 réussis
 Fichiers modifiés : index.html, dist/index.html (régénéré)
 Build refait : oui
-Commit : feat: bandeau commun en mode page publique
+Commit : 2b52cc9 — feat: bandeau commun en mode page publique
+
+
+## Tâche 4 — Carnet de tests du bandeau commun sur la page publique
+
+Date : 17/10/2026
+Agent : @recetteur
+Prompt : écrire le carnet BAN-01 à BAN-06 au format du modèle Au carré (colonnes de Cas_de_test) et le tableau des exécutions
+
+Note /5 : 5
+Ce qui allait : colonnes du modèle Excel respectées ; un test = un comportement ; résultats non inventés ; points à confirmer marqués ; rappel RGPD pour le test du formulaire
+Ce que j'ai fait corriger : rien. Complété à la main : résultats de BAN-04 à BAN-06 ; BAN-01 bloqué (accès public du document de test)
+Tests : 6 lancés, 5 réussis, 1 bloqué (BAN-01)
+Fichiers modifiés : docs/tests/carnet-bandeau-page-publique.md (créé)
+Build refait : pas nécessaire
+Commit : docs: carnet de tests du bandeau commun sur la page publique
