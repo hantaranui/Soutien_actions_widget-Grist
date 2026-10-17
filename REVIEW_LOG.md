@@ -32,3 +32,33 @@ Tests : 0 lancés, 0 réussis (installation, pas de code)
 Fichiers modifiés : CLAUDE.md, REVIEW_LOG.md, .claude/agents/ (9 fichiers), docs/design-system-france-travail.md
 Build refait : pas nécessaire
 Commit : chore: installer la squad d'agents (Sprint 0 du widget Soutien)
+
+
+## Tâche 2 — Fiche de conception : bandeau commun sur la page publique
+
+Date : 17/10/2026
+Agent : @designer-ux
+Prompt : décrire l'ajout du bandeau commun en mode page publique (data-public="oui") : place de la balise, ce que voient le public et les agents, doublons, espacement, niveau d'accès, tests touchés
+
+Note /5 : 5
+Ce qui allait : a vérifié que build.js recopie la balise telle quelle ; niveau d'accès « full » confirmé (src/main.js:641) ; doublons repérés (logos) et solution de repli proposée sans décider seul ; tests lancés avant tout changement (154/154) ; risque sur la hauteur mobile signalé
+Ce que j'ai fait corriger : rien. Décisions : logos en double acceptés pour les agents ; aucun espacement ajouté ; hauteur mobile à vérifier pendant les tests
+Tests : 154 lancés, 154 réussis (avant changement)
+Fichiers modifiés : docs/ux/bandeau-commun-page-publique.md (créé)
+Build refait : pas nécessaire
+Commit : à faire avec le code
+
+
+## Tâche 3 — Ajout de la balise du bandeau commun sur la page publique
+
+Date : 17/10/2026
+Agent : @dev-interface
+Prompt : ajouter dans le  de index.html la balise du bandeau commun avec data-titre="Page publique de soutien" et data-public="oui", et rien d'autre ; build et tests
+
+Note /5 : 5
+Ce qui allait : une seule ligne ajoutée (index.html:14) ; build refait ; 154/154 tests réussis comme avant ; balise vérifiée dans dist/index.html ; a signalé que le build rattrapait aussi la correction « corbeille » jamais publiée
+Ce que j'ai fait corriger : rien. Accepté : dist/index.html remis en accord avec les sources (correction corbeille incluse). À signaler au chef : la correction corbeille n'était pas active en PROD
+Tests : 154 lancés, 154 réussis
+Fichiers modifiés : index.html, dist/index.html (régénéré)
+Build refait : oui
+Commit : feat: bandeau commun en mode page publique
