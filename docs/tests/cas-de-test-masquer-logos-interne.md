@@ -25,7 +25,7 @@ Pour le parcours : suivre les étapes, comparer avec le résultat attendu, puis 
 
 ## 1. Le parcours à jouer par le collègue
 
-### MASQ-P-01 : Page publique vue par un agent, bandeau commun puis titre, sans le bandeau aux logos (majeur, criticité proposée, à valider par Hanta)
+### MASQ-P-01 : Page publique vue par un agent, bandeau commun puis titre, sans le bandeau aux logos (mineur, criticité proposée, à valider par Hanta et son chef de projet)
 
 **Avant de commencer** : Profil agent reconnu. Document TEST. Version 803666d publiée sur TEST. Le testeur est connecté à Grist avec son propre compte d'agent, présent dans la table Utilisateurs. Au moins une action à soutenir est affichée sur la page. Aucune donnée à créer ou à modifier.
 
@@ -61,8 +61,8 @@ Version : 803666d (Grist TEST). Testeur : Hanta. Résultat de chaque ligne : **O
 | --- | --- | --- |
 | MASQ-V-01 | Agent reconnu : le bandeau aux logos disparaît | Pour un agent reconnu, le bandeau aux deux logos du widget disparaît. Le bandeau commun et le titre h1 restent. |
 | MASQ-V-02 | Visiteur anonyme par lien public : logos gardés | Le bandeau aux deux logos reste affiché. Il n'y a pas de bandeau commun. |
-| MASQ-V-03 | Petit écran 450 px | La page s'affiche correctement à 450 px de large. Profil joué non précisé [À CONFIRMER]. |
-| MASQ-V-04 | Fenêtre de soutien ouverte puis fermée, sans saut de page | La fenêtre s'ouvre et se ferme sans saut de page. Profil joué non précisé [À CONFIRMER]. |
+| MASQ-V-03 | Petit écran 450 px, agent reconnu | La page s'affiche correctement à 450 px de large. Profil joué : agent reconnu (précisé par Hanta). |
+| MASQ-V-04 | Fenêtre de soutien ouverte puis fermée, sans saut de page, visiteur anonyme | La fenêtre s'ouvre et se ferme sans saut de page. Profil joué : visiteur anonyme (lien public). Formulaire non envoyé, confirmé par Hanta. |
 
 ## 3. À jouer par Hanta (aucun résultat pour l'instant)
 
@@ -132,10 +132,9 @@ Version : 803666d (Grist TEST). Testeur : Hanta. Résultat de chaque ligne : **O
 
 ## Points à confirmer
 
-1. MASQ-V-03 et MASQ-V-04 : profil joué (agent reconnu ou visiteur anonyme) non précisé. Si l'un n'a été joué que dans un profil, l'autre reste à faire.
-1. MASQ-V-04 : confirmer que le formulaire n'a pas été envoyé pendant ce test.
+1. MASQ-V-03 n'a été joué qu'en agent reconnu et MASQ-V-04 qu'en visiteur anonyme : les profils manquants (V-03 en visiteur anonyme, V-04 en agent reconnu) ne sont pas joués ici. Le collègue joue MASQ-P-01 (agent reconnu, fenêtre de soutien).
 1. MASQ-V-01 à MASQ-V-04 : résultats annoncés par Hanta, non constatés par le recetteur.
-1. MASQ-P-01 : criticité « majeur » proposée, à valider par Hanta.
+1. MASQ-P-01 : criticité « mineur » proposée par le recetteur (masquage cosmétique, public jamais touché), à valider par Hanta et son chef de projet.
 1. MASQ-H-02 : lecteur d'écran à utiliser, et structure des repères (landmarks).
 1. MASQ-H-03 : moyen exact de simuler le cas sur TEST.
 1. Catégorie « 4 - À jouer par Hanta » et préfixe « MASQ-H » : ajoutés par le recetteur, car le modèle n'a pas de catégorie pour les cas à ton nom. À valider.
