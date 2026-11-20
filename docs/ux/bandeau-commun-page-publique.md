@@ -2,6 +2,8 @@
 
 Objectif : ajouter le bandeau commun du projet, visible seulement par les agents reconnus. Le public anonyme ne voit aucun changement. Le formulaire de soutien, les cartes et les filtres ne bougent pas.
 
+**Décision du chef de projet (validée, branche feature/masquer-logos-interne)** : pour l'agent reconnu, le bandeau aux deux logos du widget (`<header class="lcse-header">`, [index.html](../../index.html) lignes 22-25) est caché, afin d'éviter les logos en double. Pour le visiteur anonyme, rien ne change. Voir les sections 3 et 7.
+
 ## 1. Où placer la balise, et ce que fait le build
 
 Dans [index.html](../../index.html), dans le `<head>`, **juste après** la balise de grist-plugin-api.js (ligne 13) et **avant** le bloc `<!-- BUILD:CSS -->` :
@@ -25,12 +27,21 @@ La page exactement comme aujourd'hui. Avec `data-public="oui"`, le script n'ins�
 
 ## 3. Ce que voit un agent reconnu
 
-De haut en bas :
+Comportement décidé : le bandeau aux logos (`.lcse-header`) est **affiché par défaut** et n'est **caché que lorsque l'agent est reconnu** par le bandeau commun. Un court affichage des logos avant le masquage est accepté.
+
+De haut en bas, pour l'agent reconnu :
 
 ```
 ┌ Bandeau commun (sticky, ombre en bas) ──────────────────────┐
 │ [logo FT] [logo Clubs engagés]  Titre · Menu · Prénom Nom   │
 └──────────────────────────────────────────────────────────────┘
+  (bandeau aux logos .lcse-header : CACHÉ)
+  <main> : titre h1, bouton Partager, onglets, filtres, cartes
+```
+
+Pour le visiteur anonyme (inchangé) :
+
+```
 ┌ En-tête propre du widget (.lcse-header) ─────────────────────┐
 │ [logo France Travail]                    [logo Clubs engagés]│
 └──────────────────────────────────────────────────────────────┘
@@ -39,31 +50,27 @@ De haut en bas :
 
 Le script insère le bandeau comme **premier enfant de `<body>`**, donc au-dessus de `.lcse-header`.
 
-### Éléments en double
+### Ce qui reste et ce qui disparaît pour l'agent
 
-| Élément | Bandeau | En-tête propre | Double ? |
-| --- | --- | --- | --- |
-| Logo France Travail | oui | oui | **oui** |
-| Logo « Les clubs sportifs engagés » | oui | oui | **oui** |
-| Titre | « Page publique de soutien » | aucun titre dans l'en-tête ; le h1 de la page est « Soutenez les clubs sportifs engagés pour l'insertion par le sport » | non (textes différents) |
-| Menu, personne connectée | oui | non | non |
+| Élément | Pour l'agent reconnu | Pour le public anonyme |
+| --- | --- | --- |
+| Bandeau commun (logos, titre « Page publique de soutien », menu, personne connectée) | affiché | absent (rien n'est inséré) |
+| Bandeau aux deux logos du widget (`.lcse-header`) | **caché** | affiché, sans changement |
+| Titre h1 « Soutenez les clubs sportifs engagés pour l'insertion par le sport » | **conservé** | conservé |
 
-Les logos du bandeau viennent de la table Bandeau_config : le visuel exact reste à contrôler dans Grist.
+Plus de logos en double : les logos viennent seulement du bandeau commun (table Bandeau_config : le visuel exact reste à contrôler dans Grist).
 
-**Acceptable ?** Oui pour cette tâche, à valider par la personne qui pilote :
-- Les logos en double n'apparaissent que pour les agents, jamais pour le public.
-- Aucune information n'est contradictoire.
-- Les retirer demanderait de masquer `.lcse-header` seulement pour les agents. Le widget ne sait pas aujourd'hui quand le bandeau est affiché, et rien dans le script ne documente un repère stable pour le détecter (à valider). C'est du code en plus : hors de cette tâche.
+### Affichage bref des logos avant le masquage
 
-**Si c'est jugé inacceptable**, solution la plus simple : ajouter une règle CSS dans [styles.css](../../styles.css) qui masque `.lcse-header` quand le bandeau est présent. L'en-tête reste intact pour le public. Il faut d'abord identifier un repère fiable de la présence du bandeau (à valider avec l'auteur du dépôt Bandeau_France-Travail). Ne pas retirer l'en-tête du HTML.
+Le bandeau commun n'est ajouté à la page qu'après la lecture d'Utilisateurs par Grist (réessais possibles jusqu'à 8 s, voir section 5). Pendant ce délai, l'agent voit le bandeau aux logos, puis la page remonte d'une hauteur d'en-tête quand il disparaît. C'est accepté par le chef de projet. Pas de masquage préventif : un masquage par défaut risquerait d'enlever les logos au public si le bandeau échoue.
 
 ### Place prise en hauteur (mobile, iframe Grist)
 
-Chiffres lus dans le script du bandeau : hauteur minimale 6,25 rem sur grand écran et 4 rem sous 575 px, plus l'en-tête propre (logos de 40 px + 64 px, 28 px + 44 px sous 480 px, avec leurs marges). Sur mobile, [styles.css](../../styles.css) (lignes 37-58) fixe `body` à 100 % de la hauteur, en colonne flex, avec `overflow: hidden`, et seul `.lcse-main` défile. Le bandeau devient un enfant de plus de cette colonne : la zone qui défile est plus courte pour les agents. À vérifier sur un vrai téléphone dans l'iframe Grist (à valider). Le bandeau est `position: sticky; top: 0`, ce qui est sans effet visible quand c'est `.lcse-main` qui défile.
+Chiffres lus dans le script du bandeau : hauteur minimale 6,25 rem sur grand écran et 4 rem sous 575 px. Pour l'agent, l'en-tête propre (logos de 40 px + 64 px, 28 px + 44 px sous 480 px, avec leurs marges) est caché : sa hauteur est rendue à la page, la zone qui défile n'est donc plus raccourcie que par le bandeau commun. Sur mobile, [styles.css](../../styles.css) (lignes 37-58) fixe `body` à 100 % de la hauteur, en colonne flex, avec `overflow: hidden`, et seul `.lcse-main` défile : le contrôle sur un vrai téléphone dans l'iframe Grist reste à faire (à valider). Le bandeau est `position: sticky; top: 0`, ce qui est sans effet visible quand c'est `.lcse-main` qui défile.
 
-## 4. Espacement entre le bandeau et l'en-tête propre
+## 4. Espacement entre le bandeau et la suite de la page
 
-Aujourd'hui : aucun espace. Le bandeau (fond blanc, ombre `0 4px 8px` en bas) touche `.lcse-header` (fond blanc, trait bas de 1 px). L'ombre du bandeau suffit à les séparer visuellement.
+Pour le public : rien ne change. Pour l'agent, `.lcse-header` étant caché, le bandeau (fond blanc, ombre `0 4px 8px` en bas) touche maintenant directement `<main>`. L'ombre du bandeau suffit à le séparer visuellement du contenu ; à confirmer sur le rendu réel.
 
 Recommandation : **ne rien ajouter** dans un premier temps, et regarder le rendu réel.
 
@@ -77,7 +84,7 @@ Si un espace est jugé nécessaire, utiliser les valeurs déjà employées dans 
 
 Le fond de page, derrière un tel espace, est `--ft-color-background-neutral-weakest` (styles.css, ligne 26) : l'espace apparaîtrait gris clair, entre deux blocs blancs. Le choix de la valeur (0,5 ou 1 rem) est **à valider** après un essai visuel : aucune règle de la documentation du design system n'a été lue sur ce point précis, et la page espacements du site (https://designsystem.francetravail.io/docs/fondamentaux/espacements.html) n'a pas été consultée.
 
-L'espacement entre l'en-tête propre et `<main>` ne change pas.
+Pour le public, l'espacement entre l'en-tête propre et `<main>` ne change pas.
 
 ## 5. Niveau d'accès demandé à grist.ready
 
@@ -93,15 +100,47 @@ Point de vigilance : le script du bandeau réessaie plusieurs fois (délais jusq
 
 `npm test` lancé avant tout changement : 154 tests, 154 réussis.
 
-## Vérifications humaines à prévoir (document de test, données fictives)
+## 7. Repère de présence du bandeau et masquage
 
-1. Fenêtre de navigation privée, lien public : la page est identique à l'actuelle, aucun bandeau, aucun espace vide en haut.
-2. Agent connu (dans Utilisateurs) : bandeau visible au-dessus de l'en-tête propre, avec la personne connectée.
-3. Mobile, dans l'iframe Grist : le contenu défile toujours jusqu'en bas, la modale du formulaire s'ouvre et se ferme normalement.
-4. Clavier : Tab passe dans le bandeau puis dans la page ; le menu se referme avec Échap.
+### Repère retenu (question fermée)
+
+Vérifié dans le vrai script https://hantaranui.github.io/Bandeau_France-Travail/bandeau.js :
+- ligne 323 : le bandeau est un `<div id="bm-bandeau">` ;
+- ligne 363 : en mode public (`data-public="oui"`), il n'est pas ajouté à la page au chargement ;
+- lignes 521-523 : il n'est ajouté à la page que si la personne est reconnue ;
+- ligne 532 : en cas d'erreur en mode public, rien n'est affiché.
+
+Donc `#bm-bandeau` n'est présent dans la page que pour un agent reconnu : c'est le repère à utiliser pour masquer `.lcse-header`.
+
+### Dépendance et risque
+
+- Ce repère **n'est pas un engagement documenté** du bandeau commun : le widget dépend d'un détail interne de l'autre dépôt (Bandeau_France-Travail).
+- Si l'id `bm-bandeau` change, le masquage ne se déclenche plus : l'agent retombe sur le **double bandeau** (comportement d'avant la décision, logos en double). C'est un échec sans gravité. **Le public n'est jamais touché** : sans bandeau reconnu, l'en-tête reste affiché dans tous les cas.
+- À faire côté pilotage : prévenir l'auteur du dépôt Bandeau_France-Travail que cet id est utilisé, et inclure le contrôle ci-dessous dans la recette après chaque nouvelle version du bandeau.
+
+### Accessibilité du masquage
+
+- Le titre h1 « Soutenez les clubs sportifs engagés pour l'insertion par le sport » reste : il reste le titre de la page pour les lecteurs d'écran, avec ou sans bandeau.
+- Le bandeau aux logos caché **ne doit plus être lu ni atteint** par les lecteurs d'écran ni au clavier. Il faut donc un masquage qui le retire aussi de l'arbre d'accessibilité (type `display: none`), et non un simple masquage visuel (opacité, position hors écran, taille nulle) qui le laisserait lisible.
+- Les logos étant décoratifs ou redondants avec ceux du bandeau commun, rien n'est perdu pour l'agent : ses logos restent accessibles via le bandeau commun.
+- Landmarks : vérifier que la page garde une structure cohérente (un seul repère de bandeau lisible, un `<main>`). Je n'ai pas contrôlé la façon dont le bandeau commun se déclare : à valider avec un lecteur d'écran.
+- Aucun élément focalisable ne doit rester caché mais atteignable : Tab doit passer du bandeau commun directement au contenu de `<main>`.
+- Aucune information n'est portée seulement par la couleur : le masquage ne change aucune couleur ni aucun composant.
+
+## Cas à recetter (document de test, données fictives)
+
+Chaque test indique le commit testé. Un test = un comportement.
+
+1. **Agent reconnu** (présent dans Utilisateurs) : le bandeau commun est affiché avec la personne connectée ; le bandeau aux logos du widget est caché après un court délai ; le h1 est visible ; plus de logos en double ; Tab passe du bandeau commun à la page sans s'arrêter sur le bandeau caché ; un lecteur d'écran ne lit pas le bandeau caché.
+2. **Visiteur anonyme, navigation privée, lien public** (`pp=lcse-soutien`) : la page est identique à l'actuelle ; le bandeau aux logos reste affiché ; aucun bandeau commun, aucun espace vide, aucun message.
+3. **Petit écran** (téléphone, iframe Grist), agent puis anonyme : le contenu défile jusqu'en bas, la zone qui défile est correcte, rien ne saute au masquage au point de gêner la lecture.
+4. **Fenêtre de soutien ouverte** (modale du formulaire), agent puis anonyme : elle s'ouvre, se ferme (bouton et Échap), reste correctement placée et entièrement visible ; le masquage survenant pendant qu'elle est ouverte ne la déplace pas ni ne casse le focus.
+5. **Bandeau en erreur ou id changé** (si faisable sur le document de test) : l'agent voit le double bandeau, le public est inchangé.
+6. Clavier : Tab passe dans le bandeau puis dans la page ; le menu se referme avec Échap.
 
 ## Questions ouvertes
 
-- Les logos en double pour les agents sont-ils acceptés ? (proposition : oui)
-- Quel repère fiable indique que le bandeau est affiché, si un masquage de `.lcse-header` est un jour demandé ?
-- Valeur d'espacement éventuelle (aucune, 0,5 rem ou 1 rem) : à valider après un essai visuel.
+- Valeur d'espacement éventuelle sous le bandeau commun (aucune, 0,5 rem ou 1 rem) : à valider après un essai visuel.
+- Structure des repères (landmarks) avec le bandeau commun : à valider avec un lecteur d'écran.
+- Qui prévient l'auteur du bandeau commun de la dépendance à l'id `bm-bandeau` ?
+- Fermées : logos en double (remplacé par le masquage pour l'agent) ; repère fiable (`#bm-bandeau`, voir section 7).
