@@ -88,6 +88,14 @@ html, body {
   gap: var(--ft-spacer-s2, 1rem) var(--ft-spacer-m2, 1.5rem);
 }
 
+/* Le bandeau commun (#bm-bandeau) n'existe dans la page que si la personne
+   est un agent reconnu : on cache alors le bandeau aux logos pour éviter les
+   logos en double. Le public n'a pas de bandeau commun, donc garde ses logos.
+   display: none le retire aussi pour les lecteurs d'écran et le clavier. */
+#bm-bandeau ~ .lcse-header {
+  display: none;
+}
+
 .lcse-header-logo {
   height: 40px;
   width: auto;
