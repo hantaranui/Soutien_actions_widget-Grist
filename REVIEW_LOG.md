@@ -1,4 +1,3 @@
-
 # Journal de revue — Page publique de soutien (widget Soutien)
 
 Une fiche par tâche, toujours avec ces champs dans cet ordre. Copier le bloc ci-dessous à la fin du fichier et le remplir.
@@ -61,7 +60,6 @@ Fichiers modifiés : index.html, dist/index.html (régénéré)
 Build refait : oui
 Commit : 2b52cc9 — feat: bandeau commun en mode page publique
 
-
 ## Tâche 4 — Carnet de tests du bandeau commun sur la page publique
 
 Date : 17/10/2026
@@ -75,3 +73,45 @@ Tests : 6 lancés, 5 réussis, 1 bloqué (BAN-01)
 Fichiers modifiés : docs/tests/carnet-bandeau-page-publique.md (créé)
 Build refait : pas nécessaire
 Commit : 66679a8 - docs: carnet de tests du bandeau commun sur la page publique
+
+## Tâche 5 — Inspection du bandeau aux logos et du repère du bandeau commun
+
+Date : 20/11/2026
+Agent : @relecteur
+Prompt : inspecter (lecture seule) où est le bandeau aux deux logos, si le titre h1 en est séparé, et comment savoir qu'un agent est reconnu par le bandeau commun ; proposer des solutions sans les coder
+
+Note /5 : sans objet
+Ce qui allait : fichiers et lignes cités ; titre h1 séparé du bandeau (src/main.js:173) ; limite signalée honnêtement (repère #bm-bandeau issu d'un résumé du script externe, marqué non vérifié) ; recommandation de masquer par CSS, sans retirer le header
+Ce que j'ai fait corriger : rien. Vérifié à la main dans le vrai bandeau.js : #bm-bandeau créé l. 323, non ajouté à la page en mode public (l. 363), ajouté seulement si la personne est reconnue (l. 521-523)
+Tests : aucun lancé
+Fichiers modifiés : aucun
+Build refait : pas nécessaire
+Commit : aucun
+
+## Tâche 6 — Fiche UX : masquer le bandeau aux logos en interne
+
+Date : 20/11/2026
+Agent : @designer-ux
+Prompt : mettre à jour docs/ux/bandeau-commun-page-publique.md (logos cachés pour l'agent reconnu, inchangés pour le public ; fermer la question du repère ; accessibilité ; cas de recette)
+
+Note /5 : 5
+Ce qui allait : n'a écrit que dans docs/ux/ ; faits vérifiés repris tels quels ; h1 conservé ; masquage prévu en display: none (lecteurs d'écran et clavier) ; cas à recetter ajoutés (id qui change, clavier)
+Ce que j'ai fait corriger : rien (ajouts de schémas et de tableau jugés dans le sujet)
+Tests : aucun lancé
+Fichiers modifiés : docs/ux/bandeau-commun-page-publique.md
+Build refait : pas nécessaire
+Commit : 2aff71b - docs: mettre à jour la fiche UX du bandeau pour masquer les logos en interne
+
+## Tâche 7 — CSS : cacher le bandeau aux logos quand le bandeau commun est présent
+
+Date : 20/11/2026
+Agent : @dev-interface
+Prompt : ajouter dans styles.css la règle #bm-bandeau ~ .lcse-header { display: none; } (alternative sans :has(), choisie car les navigateurs visés ne sont pas connus) ; build et tests
+
+Note /5 : sans objet
+Ce qui allait : s'est arrêté avant de coder faute d'information sur les navigateurs, au lieu de l'inventer ; a proposé une alternative sans :has() ; a vérifié que le header est un enfant direct de body ; n'a touché ni index.html, ni src/main.js, ni REVIEW_LOG.md
+Ce que j'ai fait corriger : rien (une correction de consigne : règle sans :has())
+Tests : build OK ; 154 tests, 154 réussis, 0 échec. Aucun test automatique ne couvre le CSS : rendu à valider en recette
+Fichiers modifiés : styles.css, dist/index.html
+Build refait : oui
+Commit : fa93d15 - feat: cacher le bandeau aux logos quand le bandeau commun est présent
