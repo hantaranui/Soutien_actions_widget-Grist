@@ -74,4 +74,4 @@ Ce que j'ai fait corriger : rien. Complété à la main : résultats de BAN-04 �
 Tests : 6 lancés, 5 réussis, 1 bloqué (BAN-01)
 Fichiers modifiés : docs/tests/carnet-bandeau-page-publique.md (créé)
 Build refait : pas nécessaire
-Commit : docs: carnet de tests du bandeau commun sur la page publique
+Commit : 66679a8 - docs: carnet de tests du bandeau commun sur la page publique
